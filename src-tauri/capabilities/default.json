@@ -1,14 +1,30 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Permissões padrão para o Licita.AI",
+  "description": "Capability for the main window",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
+    "fs:default",
+    "dialog:default",
     "opener:default",
-    "dialog:allow-open",
-    "fs:allow-read-file",
-    "fs:allow-read-dir",
-    "fs:allow-write-file",
-    "fs:allow-mkdir"
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "**" }]
+    }
   ]
 }

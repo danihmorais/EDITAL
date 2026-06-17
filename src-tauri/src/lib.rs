@@ -21,19 +21,21 @@ fn extrair_recursos() -> Result<PathBuf, String> {
     let modelos_dir = temp_dir.join("modelos");
     fs::create_dir_all(&modelos_dir).map_err(|e| e.to_string())?;
 
-    let dfd = include_bytes!("../../modelos/DFD - BASE.docx");
-    let etp = include_bytes!("../../modelos/ETP - BASE.docx");
-    let tr = include_bytes!("../../modelos/TR - BASE.docx");
+    let dispensa_de = include_bytes!("../../modelos/Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx");
+    let dispensa_dp = include_bytes!("../../modelos/Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx");
+    let pregao_pe = include_bytes!("../../modelos/Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx");
+    let pregao_pp = include_bytes!("../../modelos/Pregão xx Proc xx -  MINUTA PP 15.04.2026.docx");
 
-    fs::write(modelos_dir.join("DFD - BASE.docx"), dfd).map_err(|e| e.to_string())?;
-    fs::write(modelos_dir.join("ETP - BASE.docx"), etp).map_err(|e| e.to_string())?;
-    fs::write(modelos_dir.join("TR - BASE.docx"), tr).map_err(|e| e.to_string())?;
+    fs::write(modelos_dir.join("Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx"), dispensa_de).map_err(|e| e.to_string())?;
+    fs::write(modelos_dir.join("Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx"), dispensa_dp).map_err(|e| e.to_string())?;
+    fs::write(modelos_dir.join("Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx"), pregao_pe).map_err(|e| e.to_string())?;
+    fs::write(modelos_dir.join("Pregão xx Proc xx -  MINUTA PP 15.04.2026.docx"), pregao_pp).map_err(|e| e.to_string())?;
 
     Ok(temp_dir)
 }
 
 #[tauri::command]
-async fn gerar_documentos(app: AppHandle, dados_usuario: Value, dados_ia: Value) -> Result<String, String> {
+async fn gerar_documentos(app: AppHandle, dados_usuario: Value, dados_ia: Value, arquivos_base: Vec<String>) -> Result<String, String> {
     let temp_dir = extrair_recursos()?;
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let backend_path = temp_dir.join("python_backend.exe");
@@ -53,11 +55,7 @@ async fn gerar_documentos(app: AppHandle, dados_usuario: Value, dados_ia: Value)
             "preenchimentos_manuais": {},
             "pasta_saida": "Documentos_Gerados",
             "pasta_modelos": temp_dir.join("modelos").to_string_lossy().to_string(),
-            "arquivos_base": [
-                "DFD - BASE.docx",
-                "ETP - BASE.docx",
-                "TR - BASE.docx"
-            ],
+            "arquivos_base": arquivos_base,
             "app_data_dir": app_dir.to_string_lossy().to_string()
         });
 
