@@ -2,6 +2,7 @@ export const mapearDadosWizard = (dados: any) => {
   const itens = dados.itens || [];
   const totalItens = itens.reduce((acc: number, i: any) => acc + (Number(i.qtd || 0) * Number(i.valor || 0)), 0);
   const valorEstimadoFormatado = totalItens.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const valorEstimadoPuro = totalItens.toFixed(2);
   
   let modalidadeFormatada = "";
   let arquivoBase = "";
@@ -51,6 +52,8 @@ export const mapearDadosWizard = (dados: any) => {
         "{{HORA SESSAO}}": dados.horaSessao || "",
         "{{HORA_SESSAO}}": dados.horaSessao || "",
         "{{VALOR_ESTIMADO}}": valorEstimadoFormatado,
+        "{{VALOR}}": dados.valor || valorEstimadoPuro,
+        "{{EXCLUSIVO}}": dados.exclusivo || "NAO",
         "{{ITENS}}": JSON.stringify(itens),
         "{{MODALIDADE}}": dados.modalidade || "PREGAO_ELETRONICO",
         "{{MODALIDADE_NOME}}": modalidadeFormatada,

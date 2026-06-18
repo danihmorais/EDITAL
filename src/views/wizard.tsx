@@ -10,14 +10,22 @@ export default function Wizard() {
   const [etapaAtual, setEtapaAtual] = useState(0);
   const [dados, setDados] = useState({
     numeroProcesso: "",
-    numeroEdital: "",
+    numeroModalidade: "",
     modalidade: "PREGAO_ELETRONICO",
+    criterios: "ITEM",
+    dataEdital: "",
     dataSessao: "",
     horaSessao: "",
-    anexosProntos: false,
+    dataRecProp1: "",
+    dataRecProp2: "",
     objeto: "",
-    itens: [],
-    criterio: "ITEM"
+    gestores: [],
+    fiscais: [],
+    vigencia: "",
+    declAdicionais: "",
+    valor: "",
+    exclusivo: "NAO",
+    itens: []
   });
   
   const [carregando, setCarregando] = useState(false);
@@ -41,11 +49,11 @@ export default function Wizard() {
   const validarEtapa = () => {
     switch (etapaAtual) {
       case 0:
-        return dados.numeroProcesso.trim() !== "" && dados.numeroEdital.trim() !== "";
+        return dados.numeroProcesso.trim() !== "" && dados.numeroModalidade.trim() !== "";
       case 1:
-        return dados.dataSessao.trim() !== "" && dados.horaSessao.trim() !== "" && dados.anexosProntos;
+        return dados.objeto.trim() !== "";
       case 2:
-        return dados.objeto.trim() !== "" && dados.itens.length > 0 && dados.itens.every((i: any) => i.descricao.trim() !== "" && i.qtd > 0 && i.valor > 0 && i.un.trim() !== "");
+        return dados.vigencia.trim() !== "";
       default:
         return true;
     }
@@ -156,9 +164,9 @@ export default function Wizard() {
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <div>
             <h1 style={{ margin: 0, fontSize: "22px", color: "var(--text-main)" }}>
-              {etapaAtual === 0 && "Etapa 1: Processo e Modalidade"}
-              {etapaAtual === 1 && "Etapa 2: Sessão e Anexos"}
-              {etapaAtual === 2 && "Etapa 3: Objeto e Itens"}
+              {etapaAtual === 0 && "Etapa 1: Processo, Modalidade e Sessão"}
+              {etapaAtual === 1 && "Etapa 2: Objeto, Gestores e Fiscais"}
+              {etapaAtual === 2 && "Etapa 3: Vigência e Declarações"}
             </h1>
             <p style={{ margin: "4px 0 0 0", color: "var(--text-muted)", fontSize: "14px" }}>
               Insira os dados da licitação e confirme a base do TR/ETP/DFD.

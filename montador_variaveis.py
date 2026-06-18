@@ -52,6 +52,93 @@ def _formatar_multiplos(valor: str) -> str:
         return ""
     return str(valor).replace(",", "\n").replace(";", "\n")
 
+def _limpar_valor_numerico(valor) -> float:
+    try:
+        v_str = str(valor).strip()
+        if not v_str:
+            return 0.0
+        v_str = v_str.replace('R$', '').strip()
+        if v_str.count(',') == 1 and v_str.count('.') >= 0:
+            v_str = v_str.replace('.', '').replace(',', '.')
+        return float(v_str)
+    except Exception:
+        return 0.0
+
+def _formatar_valor(valor: float) -> str:
+    try:
+        return f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except Exception:
+        return str(valor)
+
+def _valor_por_extenso(valor: float) -> str:
+    try:
+        unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"]
+        dez1 = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"]
+        dezenas = ["", "dez", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"]
+        centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"]
+
+        def converte_bloco(n):
+            if n == 0: return ""
+            if n == 100: return "cem"
+            c = n // 100
+            d = (n % 100) // 10
+            u = n % 10
+            res = []
+            if c > 0: res.append(centenas[c])
+            if d == 1:
+                res.append(dez1[u])
+            else:
+                if d > 1: res.append(dezenas[d])
+                if u > 0: res.append(unidades[u])
+            return " e ".join(res)
+
+        inteiro = int(valor)
+        centavos = int(round((valor - inteiro) * 100))
+        
+        if inteiro == 0 and centavos == 0: 
+            return "zero reais"
+        
+        partes = []
+        if inteiro > 0:
+            milhoes = inteiro // 1000000
+            milhares = (inteiro % 1000000) // 1000
+            unids = inteiro % 1000
+            
+            if milhoes > 0:
+                partes.append(converte_bloco(milhoes) + (" milhões" if milhoes > 1 else " milhão"))
+            if milhares > 0:
+                partes.append(converte_bloco(milhares) + " mil")
+            if unids > 0:
+                str_unids = converte_bloco(unids)
+                if milhoes > 0 or milhares > 0:
+                    if unids <= 100 or unids % 100 == 0:
+                        partes.append("e " + str_unids)
+                    else:
+                        partes.append(str_unids)
+                else:
+                    partes.append(str_unids)
+            
+            str_inteiro = " ".join(partes)
+            if milhoes > 0 and milhares == 0 and unids == 0:
+                str_inteiro += " de reais"
+            else:
+                str_inteiro += " reais" if inteiro > 1 else " real"
+        else:
+            str_inteiro = ""
+            
+        str_centavos = ""
+        if centavos > 0:
+            str_centavos = converte_bloco(centavos) + (" centavos" if centavos > 1 else " centavo")
+            
+        if str_inteiro and str_centavos:
+            return f"{str_inteiro} e {str_centavos}"
+        elif str_inteiro:
+            return str_inteiro
+        else:
+            return str_centavos
+    except Exception:
+        return ""
+
 def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     resultado = {}
 
@@ -177,6 +264,23 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
 
     vigencia = dados_usuario.get("{{VIGENCIA}}", "")
     resultado["{{VIGENCIA}}"] = vigencia
+
+    valor_raw = dados_usuario.get("{{VALOR}}", "")
+    if valor_raw:
+        valor_float = _limpar_valor_numerico(valor_raw)
+        resultado["{{VALOR}}"] = _formatar_valor(valor_float)
+        resultado["{{VALOR EXT}}"] = _valor_por_extenso(valor_float)
+    else:
+        resultado["{{VALOR}}"] = ""
+        resultado["{{VALOR EXT}}"] = ""
+
+    exclusivo_raw = dados_usuario.get("{{EXCLUSIVO}}", "NAO")
+    if _converter_para_sim(exclusivo_raw):
+        resultado["{{EXCLUSIVO}}"] = "SIM"
+        resultado["{{EXCLUSIVO TXT}}"] = "Nos termos do art. 47 e 48 da LCP 123/2006, que versa que a Administração Pública “deverá realizar processo licitatório destinado exclusivamente à participação de microempresas e empresas de pequeno porte nos itens de contratação cujo valor seja de até R$ 80.000,00 (oitenta mil reais)”, e considerando ainda que este tipo de contratação é comumente realizado por empresas de pequeno porte em valores de mercado, hipótese no qual não haverá risco de oportunidade significativos, **esta licitação SERÁ exclusiva para ME/EPP.**"
+    else:
+        resultado["{{EXCLUSIVO}}"] = "NÃO"
+        resultado["{{EXCLUSIVO TXT}}"] = "Nos termos do art. 47, 48 e 49 da LCP 123/2006, que versa que “o tratamento diferenciado e simplificado para as microempresas e empresas de pequeno porte” pode ser afastado quando “não for vantajoso para a administração pública ou representar prejuízo ao conjunto ou complexo do objeto a ser contratado” e, considerando ainda a justificativa apresentada no bojo do Estudo Técnico Preliminar e no Termo de referência,  **esta licitação NÃO será exclusiva para ME/EPP, sendo concedido, porém, o benefício do empate ficto e demais tratamentos diferenciados para tais empresas.**"
 
     return resultado
 
