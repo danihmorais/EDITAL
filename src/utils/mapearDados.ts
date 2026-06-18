@@ -87,7 +87,6 @@ export const mapearDadosWizard = (dados: any) => {
         "{{DATA DO EDITAL}}": dados.dataEdital || "",
         "{{DATA DA SESSAO}}": dados.dataSessao || "",
         "{{DATA REC PROP1}}": dados.dataRecProp1 || "",
-        "{{DATA REC PROP2}}": dados.dataRecProp2 || "",
         "{{HORA SESSAO}}": dados.horaSessao || "",
         "{{HORA_SESSAO}}": dados.horaSessao || "",
         "{{VALOR}}": dados.valor || "",

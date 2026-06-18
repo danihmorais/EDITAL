@@ -239,6 +239,7 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     resultado["{{FISCAL}}"] = _formatar_multiplos(fiscais_str)
 
     blocos_ges_fis = []
+    blocos_ges_ass = []
 
     if gestores_str and gestores_str != "[Não informado]":
         nomes_g = [n.strip() for n in gestores_str.split(",") if n.strip()]
@@ -247,6 +248,9 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
             cargo = cargos_g[i] if i < len(cargos_g) else ""
             bloco = f"**GESTOR:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n**Assinatura:** ______________________________________________________"
             blocos_ges_fis.append(bloco)
+            blocos_ges_ass.append(f"_____________________________\n{nome}\nGESTOR\n ")
+
+    blocos_fis_ass = []
 
     if fiscais_str and fiscais_str != "[Não informado]":
         nomes_f = [n.strip() for n in fiscais_str.split(",") if n.strip()]
@@ -255,8 +259,11 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
             cargo = cargos_f[i] if i < len(cargos_f) else ""
             bloco = f"**FISCAL:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n**Assinatura:** ______________________________________________________"
             blocos_ges_fis.append(bloco)
+            blocos_fis_ass.append(f"_____________________________\n{nome}\nFISCAL\n ")
 
     resultado["{{GES.FIS.ANEXOS}}"] = "\n\n".join(blocos_ges_fis) if blocos_ges_fis else ""
+    resultado["{{GES.ASS}}"] = "\n".join(blocos_ges_ass) if blocos_ges_ass else ""
+    resultado["{{FIS.ASS}}"] = "\n".join(blocos_fis_ass) if blocos_fis_ass else ""
 
     resultado["{{GESTORES}}"] = (
         "; ".join(_formatar_lista_assinaturas(gestores_str, cargos_gestores_str))
@@ -283,6 +290,18 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         resultado["{{DECL.ADICIONAIS}}"] = "\n".join([d.strip() for d in decl_adicionais.split("\n") if d.strip()])
     else:
         resultado["{{DECL.ADICIONAIS}}"] = ""
+
+    contratante_str = dados_usuario.get("{{CONTRATANTE}}", "")
+    if contratante_str:
+        resultado["{{CONTRATANTE}}"] = "\n".join([c.strip() for c in contratante_str.split("\n") if c.strip()])
+    else:
+        resultado["{{CONTRATANTE}}"] = ""
+
+    contratada_str = dados_usuario.get("{{CONTRATADA}}", "")
+    if contratada_str:
+        resultado["{{CONTRATADA}}"] = "\n".join([c.strip() for c in contratada_str.split("\n") if c.strip()])
+    else:
+        resultado["{{CONTRATADA}}"] = ""
 
     vigencia = dados_usuario.get("{{VIGENCIA}}", "")
     resultado["{{VIGENCIA}}"] = vigencia

@@ -68,17 +68,17 @@ export default function Step1({ dados, atualizarDados }: any) {
           </label>
         </div>
       )}
-
-      <div>
-        <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Data do Edital</label>
-        <input
-          type="date"
-          value={dados.dataEdital || ""}
-          onChange={(e) => atualizarDados({ dataEdital: e.target.value })}
-          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-        />
+      <div style={{ display: "flex", gap: "20px" }}>
+        <div style={{ flex: 1 }}>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Início Rec. Propostas</label>
+          <input
+            type="date"
+            value={dados.dataRecProp1 || ""}
+            onChange={(e) => atualizarDados({ dataRecProp1: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+          />
+        </div>
       </div>
-
       <div style={{ display: "flex", gap: "20px" }}>
         <div style={{ flex: 1 }}>
           <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Data da Sessão</label>
@@ -99,26 +99,14 @@ export default function Step1({ dados, atualizarDados }: any) {
           />
         </div>
       </div>
-
-      <div style={{ display: "flex", gap: "20px" }}>
-        <div style={{ flex: 1 }}>
-          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Início Rec. Propostas</label>
-          <input
-            type="date"
-            value={dados.dataRecProp1 || ""}
-            onChange={(e) => atualizarDados({ dataRecProp1: e.target.value })}
-            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Fim Rec. Propostas</label>
-          <input
-            type="date"
-            value={dados.dataRecProp2 || ""}
-            onChange={(e) => atualizarDados({ dataRecProp2: e.target.value })}
-            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-          />
-        </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Data do Edital</label>
+        <input
+          type="date"
+          value={dados.dataEdital || ""}
+          onChange={(e) => atualizarDados({ dataEdital: e.target.value })}
+          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+        />
       </div>
     </div>
   );

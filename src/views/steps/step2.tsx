@@ -228,8 +228,8 @@ export default function Step2({ dados, atualizarDados }: any) {
         <textarea
           value={dados.dotacao || ""}
           onChange={(e) => atualizarDados({ dotacao: e.target.value })}
-          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "80px", marginBottom: "12px" }}
-          placeholder="Descreva a dotação orçamentária ou cole as informações de texto..."
+          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "100px", marginBottom: "12px" }}
+          placeholder="Descreva a dotação orçamentária ou cole as informações de texto com quebras de linha..."
         />
         <input
           type="file"
@@ -275,8 +275,8 @@ export default function Step2({ dados, atualizarDados }: any) {
           <textarea
             value={dados.textoVistoria || ""}
             onChange={(e) => atualizarDados({ textoVistoria: e.target.value })}
-            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "80px" }}
-            placeholder="Descreva as condições da vistoria..."
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "100px" }}
+            placeholder="Descreva as condições da vistoria (pode colar com quebras de linha)..."
           />
         )}
       </div>
@@ -298,8 +298,8 @@ export default function Step2({ dados, atualizarDados }: any) {
           <textarea
             value={dados.textoAmostra || ""}
             onChange={(e) => atualizarDados({ textoAmostra: e.target.value })}
-            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "80px" }}
-            placeholder="Descreva as condições da amostra..."
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "100px" }}
+            placeholder="Descreva as condições da amostra (pode colar com quebras de linha)..."
           />
         )}
       </div>

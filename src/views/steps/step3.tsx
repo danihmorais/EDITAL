@@ -1,27 +1,56 @@
 import React from "react";
 
 export default function Step3({ dados, atualizarDados }: any) {
+  const handleValorChange = (e: any) => {
+    let v = e.target.value.replace(/\D/g, "");
+    if (v === "") {
+      atualizarDados({ valor: "" });
+      return;
+    }
+    const valNum = parseInt(v, 10) / 100;
+    const formatado = valNum.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+    atualizarDados({ valor: formatado });
+  };
+
+  const vigenciaArr = (dados.vigencia || "").split(" ");
+  const numVigencia = vigenciaArr.length > 0 && !isNaN(Number(vigenciaArr[0])) ? vigenciaArr[0] : "";
+  const unitVigencia = vigenciaArr.length > 1 ? vigenciaArr[1] : "meses";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
         <div>
           <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Vigência</label>
-          <input
-            type="text"
-            value={dados.vigencia || ""}
-            onChange={(e) => atualizarDados({ vigencia: e.target.value })}
-            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-            placeholder="Ex: 12 meses"
-          />
+          <div style={{ display: "flex", gap: "8px" }}>
+            <input
+              type="number"
+              value={numVigencia}
+              onChange={(e) => atualizarDados({ vigencia: `${e.target.value} ${unitVigencia}`.trim() })}
+              style={{ width: "60%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+              placeholder="Ex: 12"
+            />
+            <select
+              value={unitVigencia}
+              onChange={(e) => atualizarDados({ vigencia: `${numVigencia} ${e.target.value}`.trim() })}
+              style={{ width: "40%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            >
+              <option value="dias">Dias</option>
+              <option value="meses">Meses</option>
+              <option value="anos">Anos</option>
+            </select>
+          </div>
         </div>
         <div>
           <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Valor Estimado</label>
           <input
             type="text"
             value={dados.valor || ""}
-            onChange={(e) => atualizarDados({ valor: e.target.value })}
+            onChange={handleValorChange}
             style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-            placeholder="Ex: R$ 50.000,00"
+            placeholder="R$ 0,00"
           />
         </div>
       </div>
@@ -106,8 +135,28 @@ export default function Step3({ dados, atualizarDados }: any) {
         <textarea
           value={dados.declAdicionais || ""}
           onChange={(e) => atualizarDados({ declAdicionais: e.target.value })}
-          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "100px" }}
-          placeholder="Insira outras declarações necessárias..."
+          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "120px" }}
+          placeholder="Insira outras declarações necessárias (pode colar com quebras de linha)..."
+        />
+      </div>
+
+      <div>
+        <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Cláusulas Adicionais da Contratante</label>
+        <textarea
+          value={dados.contratante || ""}
+          onChange={(e) => atualizarDados({ contratante: e.target.value })}
+          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "120px" }}
+          placeholder="Insira as cláusulas adicionais da contratante (separe uma a uma com quebra de linha)..."
+        />
+      </div>
+
+      <div>
+        <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Cláusulas Adicionais da Contratada</label>
+        <textarea
+          value={dados.contratada || ""}
+          onChange={(e) => atualizarDados({ contratada: e.target.value })}
+          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "120px" }}
+          placeholder="Insira as cláusulas adicionais da contratada (separe uma a uma com quebra de linha)..."
         />
       </div>
     </div>

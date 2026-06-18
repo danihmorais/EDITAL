@@ -23,7 +23,6 @@ export default function Wizard() {
     dataSessao: "",
     horaSessao: "",
     dataRecProp1: "",
-    dataRecProp2: "",
     objeto: "",
     gestores: [],
     fiscais: [],
@@ -34,6 +33,8 @@ export default function Wizard() {
     vigencia: "",
     documentosAdicionais: [],
     declAdicionais: "",
+    contratante: "",
+    contratada: "",
     valor: "",
     exclusivo: "NAO",
     itens: [],
@@ -98,7 +99,6 @@ export default function Wizard() {
 
       await invoke("gerar_documentos", {
         dadosUsuario: dadosMapeados,
-        dadosIa: {},
         arquivosBase: [arquivoBase]
       });
 
