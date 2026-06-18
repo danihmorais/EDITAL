@@ -115,11 +115,11 @@ fn abrir_link(app: AppHandle, url: String) -> Result<(), String> {
 #[tauri::command]
 async fn aplicar_atualizacao(url: String) -> Result<(), String> {
     let temp_dir = std::env::temp_dir();
-    let exe_path = temp_dir.join("licita_ai_update.exe");
+    let exe_path = temp_dir.join("monta_edital_update.exe");
     let client = reqwest::Client::new();
     
     let response = client.get(&url)
-        .header("User-Agent", "licita-ai-updater")
+        .header("User-Agent", "monta-edital-updater")
         .send()
         .await
         .map_err(|e| e.to_string())?;
