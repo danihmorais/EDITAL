@@ -26,12 +26,13 @@ MODALIDADE_TEXTO = {
 }
 
 def gerar_edital(tipo_edital: str, dados_preenchimento: dict):
-    caminho_modelo = MODELOS_DISPONIVEIS.get(tipo_edital)
+    base_dir = os.getcwd()
+    caminho_modelo = os.path.join(base_dir, MODELOS_DISPONIVEIS.get(tipo_edital, ""))
 
-    if not caminho_modelo or not os.path.exists(caminho_modelo):
+    if not tipo_edital in MODELOS_DISPONIVEIS or not os.path.exists(caminho_modelo):
         return {"sucesso": False, "erro": f"Modelo não encontrado para o tipo: {tipo_edital}"}
 
-    diretorio_saida = "editais_gerados"
+    diretorio_saida = os.path.join(base_dir, "editais_gerados")
     os.makedirs(diretorio_saida, exist_ok=True)
     
     dados_processados = montar_variaveis_fixas(dados_preenchimento)
@@ -59,7 +60,8 @@ def gerar_edital(tipo_edital: str, dados_preenchimento: dict):
     return {
         "sucesso": True, 
         "caminhos": [caminho_edital, caminho_minuta],
-        "caminho_arquivo": caminho_edital
+        "caminho_arquivo": caminho_edital,
+        "diretorio_saida": diretorio_saida
     }
 
 def processar():

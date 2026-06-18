@@ -20,27 +20,35 @@ fn extrair_recursos() -> Result<PathBuf, String> {
 
     let python_path = base_dir.join("python_backend.exe");
     let python_exe = include_bytes!("../bin/python_backend.exe");
-    let _ = fs::write(&python_path, python_exe);
+    fs::write(&python_path, python_exe).map_err(|e| format!("Erro ao extrair python_backend.exe: {}", e))?;
 
     let modelos_dir = base_dir.join("modelos");
-    let _ = fs::create_dir_all(&modelos_dir);
+    fs::create_dir_all(&modelos_dir).map_err(|e| format!("Erro ao criar pasta modelos: {}", e))?;
 
     let dispensa_de = include_bytes!("../../modelos/Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx");
     let dispensa_dp = include_bytes!("../../modelos/Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx");
     let pregao_pe = include_bytes!("../../modelos/Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx");
     let pregao_pp = include_bytes!("../../modelos/Pregão xx Proc xx -  MINUTA PP 15.04.2026.docx");
 
-    let _ = fs::write(modelos_dir.join("Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx"), dispensa_de);
-    let _ = fs::write(modelos_dir.join("Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx"), dispensa_dp);
-    let _ = fs::write(modelos_dir.join("Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx"), pregao_pe);
-    let _ = fs::write(modelos_dir.join("Pregão xx Proc xx -  MINUTA PP 15.04.2026.docx"), pregao_pp);
+    fs::write(modelos_dir.join("Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx"), dispensa_de)
+        .map_err(|e| format!("Erro ao extrair Dispensa DE: {}", e))?;
+    fs::write(modelos_dir.join("Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx"), dispensa_dp)
+        .map_err(|e| format!("Erro ao extrair Dispensa DP: {}", e))?;
+    fs::write(modelos_dir.join("Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx"), pregao_pe)
+        .map_err(|e| format!("Erro ao extrair Pregão PE: {}", e))?;
+    fs::write(modelos_dir.join("Pregão xx Proc xx -  MINUTA PP 15.04.2026.docx"), pregao_pp)
+        .map_err(|e| format!("Erro ao extrair Pregão PP: {}", e))?;
 
     Ok(base_dir)
 }
 
 #[tauri::command]
 async fn gerar_documentos(_app: AppHandle, dados_usuario: Value, arquivos_base: Vec<String>) -> Result<String, String> {
-    let base_dir = extrair_recursos()?;
+    let base_dir = match extrair_recursos() {
+        Ok(dir) => dir,
+        Err(e) => return Err(e),
+    };
+    
     let backend_path = base_dir.join("python_backend.exe");
 
     let tipo_edital = arquivos_base.first().cloned().unwrap_or_else(|| "pregao_eletronico".to_string());
@@ -63,11 +71,34 @@ async fn gerar_documentos(_app: AppHandle, dados_usuario: Value, arquivos_base: 
     }
 
     let output = child.wait_with_output().await.map_err(|e| e.to_string())?;
+    
     if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+        let stderr_str = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Python falhou criticamente (Status {}). Erro: {}", output.status, stderr_str));
     }
 
-    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    let stdout_str = String::from_utf8_lossy(&output.stdout).into_owned();
+    
+    let json_start = stdout_str.find('{').unwrap_or(0);
+    let json_str = &stdout_str[json_start..];
+
+    match serde_json::from_str::<Value>(json_str) {
+        Ok(parsed) => {
+            if let Some(sucesso) = parsed.get("sucesso").and_then(|s| s.as_bool()) {
+                if sucesso {
+                    Ok(stdout_str)
+                } else {
+                    let erro = parsed.get("erro").and_then(|e| e.as_str()).unwrap_or("Erro silencioso gerado pelo script Python.");
+                    Err(erro.to_string())
+                }
+            } else {
+                Err(format!("A resposta do Python não continha a chave 'sucesso'. Resposta: {}", stdout_str))
+            }
+        },
+        Err(e) => {
+            Err(format!("Falha grave ao processar resposta do Python.\nErro: {}\nSaída recebida: {}", e, stdout_str))
+        }
+    }
 }
 
 #[tauri::command]
