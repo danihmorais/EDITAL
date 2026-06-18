@@ -1,8 +1,13 @@
 import os
 import json
 import sys
+import io
 from processador_docx import preencher_documento
 from montador_variaveis import montar_variaveis_fixas
+
+if sys.platform == "win32" and sys.stdout is not None:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 MODELOS_DISPONIVEIS = {
     "dispensa": "modelos/Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx",
@@ -30,7 +35,7 @@ def gerar_edital(tipo_edital: str, dados_preenchimento: dict):
     caminho_modelo = os.path.join(base_dir, MODELOS_DISPONIVEIS.get(tipo_edital, ""))
 
     if not tipo_edital in MODELOS_DISPONIVEIS or not os.path.exists(caminho_modelo):
-        return {"sucesso": False, "erro": f"Modelo não encontrado para o tipo: {tipo_edital}"}
+        return {"sucesso": False, "erro": f"Modelo não encontrado para o tipo: {tipo_edital}\nCaminho buscado: {caminho_modelo}"}
 
     diretorio_saida = os.path.join(base_dir, "editais_gerados")
     os.makedirs(diretorio_saida, exist_ok=True)
@@ -72,7 +77,7 @@ def processar():
             conteudo = sys.stdin.read()
             
         if not conteudo.strip():
-            print(json.dumps({"sucesso": False, "erro": "Nenhum dado recebido"}))
+            print(json.dumps({"sucesso": False, "erro": "Nenhum dado recebido via Stdin."}), flush=True)
             return
             
         requisicao = json.loads(conteudo)
@@ -81,10 +86,10 @@ def processar():
         dados_preenchimento = requisicao.get("dados_preenchimento", {})
         
         resultado = gerar_edital(tipo_edital, dados_preenchimento)
-        print(json.dumps(resultado))
+        print(json.dumps(resultado), flush=True)
         
     except Exception as e:
-        print(json.dumps({"sucesso": False, "erro": str(e)}))
+        print(json.dumps({"sucesso": False, "erro": str(e)}), flush=True)
 
 if __name__ == "__main__":
     processar()

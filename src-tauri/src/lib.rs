@@ -50,15 +50,23 @@ async fn gerar_documentos(_app: AppHandle, dados_usuario: Value, arquivos_base: 
     };
     
     let backend_path = base_dir.join("python_backend.exe");
-
     let tipo_edital = arquivos_base.first().cloned().unwrap_or_else(|| "pregao_eletronico".to_string());
 
-    let mut child = Command::new(backend_path)
-        .current_dir(&base_dir)
+    let mut std_cmd = std::process::Command::new(backend_path);
+    std_cmd.current_dir(&base_dir)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+        .stderr(Stdio::piped());
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        std_cmd.creation_flags(0x08000000);
+    }
+
+    let mut command = Command::from(std_cmd);
+
+    let mut child = command.spawn()
         .map_err(|e| format!("Falha ao iniciar o backend integrado: {}", e))?;
 
     if let Some(mut stdin) = child.stdin.take() {
@@ -88,15 +96,15 @@ async fn gerar_documentos(_app: AppHandle, dados_usuario: Value, arquivos_base: 
                 if sucesso {
                     Ok(stdout_str)
                 } else {
-                    let erro = parsed.get("erro").and_then(|e| e.as_str()).unwrap_or("Erro silencioso gerado pelo script Python.");
+                    let erro = parsed.get("erro").and_then(|e| e.as_str()).unwrap_or("Erro silencioso no Python.");
                     Err(erro.to_string())
                 }
             } else {
-                Err(format!("A resposta do Python não continha a chave 'sucesso'. Resposta: {}", stdout_str))
+                Err(format!("Resposta JSON inválida: {}", stdout_str))
             }
         },
         Err(e) => {
-            Err(format!("Falha grave ao processar resposta do Python.\nErro: {}\nSaída recebida: {}", e, stdout_str))
+            Err(format!("Falha ao processar resposta: {}\nSaída pura: {}", e, stdout_str))
         }
     }
 }
@@ -156,7 +164,7 @@ async fn aplicar_atualizacao(url: String) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
     
     if !response.status().is_success() {
-        return Err(format!("Falha ao baixar o executável: Status {}", response.status()));
+        return Err(format!("Falha ao baixar atualização: Status {}", response.status()));
     }
 
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
@@ -173,10 +181,7 @@ fn abrir_pasta_documentos() -> Result<(), String> {
     let pasta = base_dir.join("editais_gerados");
 
     if !pasta.exists() {
-        return Err(format!(
-            "Pasta não encontrada: {}",
-            pasta.display()
-        ));
+        return Err(format!("Pasta não encontrada: {}", pasta.display()));
     }
 
     #[cfg(target_os = "windows")]
