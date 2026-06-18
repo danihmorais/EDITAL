@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::process::Stdio;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tauri_plugin_opener::OpenerExt;
 
 fn get_base_dir() -> Result<PathBuf, String> {
@@ -20,8 +20,6 @@ fn extrair_recursos() -> Result<PathBuf, String> {
 
     let python_path = base_dir.join("python_backend.exe");
     let python_exe = include_bytes!("../bin/python_backend.exe");
-    // Ignoramos o erro aqui propositalmente. Se o app estiver aberto, o executável pode estar travado,
-    // então ele simplesmente usará o que já existe lá.
     let _ = fs::write(&python_path, python_exe);
 
     let modelos_dir = base_dir.join("modelos");
@@ -45,11 +43,10 @@ async fn gerar_documentos(_app: AppHandle, dados_usuario: Value, arquivos_base: 
     let base_dir = extrair_recursos()?;
     let backend_path = base_dir.join("python_backend.exe");
 
-    // Pega o tipo do edital que veio no arquivoBase do mapearDados.ts
     let tipo_edital = arquivos_base.first().cloned().unwrap_or_else(|| "pregao_eletronico".to_string());
 
     let mut child = Command::new(backend_path)
-        .current_dir(&base_dir) // Garante que o python rode na pasta certa para encontrar 'modelos/'
+        .current_dir(&base_dir)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
