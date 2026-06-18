@@ -130,6 +130,47 @@ export default function Step3({ dados, atualizarDados }: any) {
         </div>
       </div>
 
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+        <h3 style={{ margin: "0 0 4px 0", color: "var(--text-main)", fontSize: "16px", fontWeight: "bold" }}>Documentos Adicionais</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {(dados.documentosAdicionais || []).map((doc: string, index: number) => (
+            <div key={index} style={{ display: "flex", gap: "8px" }}>
+              <input
+                type="text"
+                value={doc}
+                onChange={(e) => {
+                  const novosDocs = [...(dados.documentosAdicionais || [])];
+                  novosDocs[index] = e.target.value;
+                  atualizarDados({ documentosAdicionais: novosDocs });
+                }}
+                style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+                placeholder="Nome do documento adicional"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const novosDocs = (dados.documentosAdicionais || []).filter((_: any, i: number) => i !== index);
+                  atualizarDados({ documentosAdicionais: novosDocs });
+                }}
+                style={{ padding: "0 15px", background: "transparent", color: "var(--btn-danger)", border: "1px solid var(--btn-danger)", borderRadius: "8px", cursor: "pointer" }}
+              >
+                Remover
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              const novosDocs = [...(dados.documentosAdicionais || []), ""];
+              atualizarDados({ documentosAdicionais: novosDocs });
+            }}
+            style={{ padding: "10px", background: "transparent", border: "1.5px dashed var(--btn-primary)", color: "var(--btn-primary)", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", marginTop: "8px" }}
+          >
+            + Adicionar Documento Adicional
+          </button>
+        </div>
+      </div>
+
       <div>
         <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Declarações Adicionais</label>
         <textarea
