@@ -1,55 +1,103 @@
-// src/views/steps/step3.tsx
 import React from "react";
 
 export default function Step3({ dados, atualizarDados }: any) {
-  const addDoc = () => atualizarDados({ documentosAdicionais: [...(dados.documentosAdicionais || []), ""] });
-  const updateDoc = (index: number, val: string) => {
-    const next = [...(dados.documentosAdicionais || [])];
-    next[index] = val;
-    atualizarDados({ documentosAdicionais: next });
-  };
-  const removeDoc = (index: number) => {
-    const next = [...(dados.documentosAdicionais || [])];
-    next.splice(index, 1);
-    atualizarDados({ documentosAdicionais: next });
-  };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      <div>
-        <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Vigência</label>
-        <input
-          type="text"
-          value={dados.vigencia || ""}
-          onChange={(e) => atualizarDados({ vigencia: e.target.value })}
-          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-          placeholder="Ex: 12 (doze) meses"
-        />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Vigência</label>
+          <input
+            type="text"
+            value={dados.vigencia || ""}
+            onChange={(e) => atualizarDados({ vigencia: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            placeholder="Ex: 12 meses"
+          />
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Valor Estimado</label>
+          <input
+            type="text"
+            value={dados.valor || ""}
+            onChange={(e) => atualizarDados({ valor: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            placeholder="Ex: R$ 50.000,00"
+          />
+        </div>
       </div>
 
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <label style={{ color: "var(--text-main)", fontWeight: "bold" }}>Documentos Adicionais de Habilitação</label>
-            <button type="button" onClick={addDoc} style={{ padding: "6px 12px", background: "transparent", border: "1.5px solid var(--btn-primary)", borderRadius: "6px", color: "var(--btn-primary)", fontSize: "12px", fontWeight: "bold", cursor: "pointer" }}>+ Adicionar Documento</button>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Exclusivo para ME/EPP</label>
+          <select
+            value={dados.exclusivo || "NAO"}
+            onChange={(e) => atualizarDados({ exclusivo: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+          >
+            <option value="NAO">Não</option>
+            <option value="SIM">Sim</option>
+          </select>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {(dados.documentosAdicionais || []).length === 0 && (
-                <p style={{ margin: 0, padding: "14px", fontSize: "13px", color: "var(--text-light)", background: "var(--bg-subtle)", border: "1.5px dashed var(--border)", borderRadius: "8px", textAlign: "center" }}>
-                    Nenhum documento adicional inserido.
-                </p>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+        <h3 style={{ margin: "0 0 4px 0", color: "var(--text-main)", fontSize: "16px", fontWeight: "bold" }}>Anexar Documentos de Referência</h3>
+        <p style={{ margin: "0 0 12px 0", color: "var(--text-muted)", fontSize: "13px" }}>Os documentos abaixo serão mesclados automaticamente nas tags de substituição do modelo.</p>
+        
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div>
+            <label style={{ display: "block", marginBottom: "6px", color: "var(--text-main)", fontSize: "14px", fontWeight: "bold" }}>Documento de Formalização da Demanda (DFD) — insere em {"{{DFD}}"}</label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.txt"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                atualizarDados({ arquivoDfd: file });
+              }}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            />
+            {dados.arquivoDfd && (
+              <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold" }}>
+                ✓ {dados.arquivoDfd.name} selecionado.
+              </div>
             )}
-            {(dados.documentosAdicionais || []).map((doc: string, i: number) => (
-                <div key={i} style={{ display: "flex", gap: "8px" }}>
-                    <input
-                        type="text"
-                        value={doc}
-                        onChange={(e) => updateDoc(i, e.target.value)}
-                        style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-                        placeholder={`Descrição do documento ${12 + i}`}
-                    />
-                    <button type="button" onClick={() => removeDoc(i)} style={{ padding: "10px", background: "transparent", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-light)", cursor: "pointer" }}>✕</button>
-                </div>
-            ))}
+          </div>
+
+          <div>
+            <label style={{ display: "block", marginBottom: "6px", color: "var(--text-main)", fontSize: "14px", fontWeight: "bold" }}>Estudo Técnico Preliminar (ETP) — insere em {"{{ETP}}"}</label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.txt"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                atualizarDados({ arquivoEtp: file });
+              }}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            />
+            {dados.arquivoEtp && (
+              <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold" }}>
+                ✓ {dados.arquivoEtp.name} selecionado.
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label style={{ display: "block", marginBottom: "6px", color: "var(--text-main)", fontSize: "14px", fontWeight: "bold" }}>Termo de Referência (TR) — insere em {"{{TR}}"}</label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.txt"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                atualizarDados({ arquivoTr: file });
+              }}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            />
+            {dados.arquivoTr && (
+              <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold" }}>
+                ✓ {dados.arquivoTr.name} selecionado.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -59,7 +107,7 @@ export default function Step3({ dados, atualizarDados }: any) {
           value={dados.declAdicionais || ""}
           onChange={(e) => atualizarDados({ declAdicionais: e.target.value })}
           style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "100px" }}
-          placeholder="Insira declarações adicionais (se houver)..."
+          placeholder="Insira outras declarações necessárias..."
         />
       </div>
     </div>

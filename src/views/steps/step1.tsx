@@ -1,10 +1,9 @@
-// src/views/steps/step1.tsx
 import React from "react";
 
 export default function Step1({ dados, atualizarDados }: any) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
         <div>
           <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Número do Processo</label>
           <input
@@ -27,7 +26,7 @@ export default function Step1({ dados, atualizarDados }: any) {
         </div>
       </div>
       
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
         <div>
           <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Modalidade</label>
           <select
@@ -52,53 +51,6 @@ export default function Step1({ dados, atualizarDados }: any) {
             <option value="LOTE">Menor Preço por Lote</option>
             <option value="GLOBAL">Menor Preço Global</option>
           </select>
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", }}>
-        <div>
-          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Tipo de Objeto</label>
-          <select
-            value={dados.tipoObjeto || "AQUISICAO"}
-            onChange={(e) => atualizarDados({ tipoObjeto: e.target.value })}
-            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-          >
-            <option value="AQUISICAO">Aquisição</option>
-            <option value="SERVICO">Serviço</option>
-          </select>
-        </div>
-        <div>
-          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Dotação Orçamentária</label>
-          <input
-            type="text"
-            value={dados.dotacao || ""}
-            onChange={(e) => atualizarDados({ dotacao: e.target.value })}
-            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-            placeholder="Informe a dotação"
-          />
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", }}>
-        <div>
-          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Quantidade de Itens</label>
-          <input
-            type="number"
-            value={dados.quantidadeItens || ""}
-            onChange={(e) => atualizarDados({ quantidadeItens: e.target.value })}
-            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-            placeholder="Ex: 5"
-          />
-        </div>
-        <div>
-          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Quantidade de Lotes</label>
-          <input
-            type="number"
-            value={dados.quantidadeLotes || ""}
-            onChange={(e) => atualizarDados({ quantidadeLotes: e.target.value })}
-            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
-            placeholder="Ex: 2"
-          />
         </div>
       </div>
 

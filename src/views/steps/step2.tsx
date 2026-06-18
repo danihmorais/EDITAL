@@ -185,6 +185,69 @@ function PessoaList({ label, singularLabel, items, onChange }: PessoaListProps) 
 export default function Step2({ dados, atualizarDados }: any) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+      
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Tipo de Objeto</label>
+          <select
+            value={dados.tipoObjeto || "AQUISICAO"}
+            onChange={(e) => atualizarDados({ tipoObjeto: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+          >
+            <option value="AQUISICAO">Aquisição</option>
+            <option value="SERVICO">Serviço</option>
+          </select>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Quantidade de Itens</label>
+          <input
+            type="number"
+            value={dados.quantidadeItens || ""}
+            onChange={(e) => atualizarDados({ quantidadeItens: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            placeholder="Ex: 5"
+          />
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Quantidade de Lotes</label>
+          <input
+            type="number"
+            value={dados.quantidadeLotes || ""}
+            onChange={(e) => atualizarDados({ quantidadeLotes: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            placeholder="Ex: 2"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Dotação Orçamentária</label>
+        <textarea
+          value={dados.dotacao || ""}
+          onChange={(e) => atualizarDados({ dotacao: e.target.value })}
+          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "80px", marginBottom: "12px" }}
+          placeholder="Descreva a dotação orçamentária ou cole as informações de texto..."
+        />
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []);
+            atualizarDados({ dotacaoImagens: files });
+          }}
+          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+        />
+        {dados.dotacaoImagens && dados.dotacaoImagens.length > 0 && (
+          <div style={{ marginTop: "8px", fontSize: "13px", color: "var(--text-muted)", fontWeight: "bold" }}>
+            {dados.dotacaoImagens.length} imagem(ns) de dotação selecionada(s).
+          </div>
+        )}
+      </div>
+
       <div>
         <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Objeto do Edital</label>
         <textarea

@@ -1,4 +1,3 @@
-// src/views/wizard.tsx
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Step1 from "./steps/step1";
@@ -16,6 +15,7 @@ export default function Wizard() {
     criterios: "ITEM",
     tipoObjeto: "AQUISICAO",
     dotacao: "",
+    dotacaoImagens: [],
     quantidadeItens: "",
     quantidadeLotes: "",
     arquivoMagnetico: false,
@@ -36,7 +36,10 @@ export default function Wizard() {
     declAdicionais: "",
     valor: "",
     exclusivo: "NAO",
-    itens: []
+    itens: [],
+    arquivoDfd: null,
+    arquivoEtp: null,
+    arquivoTr: null
   });
   
   const [carregando, setCarregando] = useState(false);
