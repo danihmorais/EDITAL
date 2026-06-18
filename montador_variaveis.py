@@ -1,4 +1,3 @@
-import config
 from datetime import datetime, timedelta
 
 CHAVES_RAW = {
@@ -189,35 +188,25 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     
     if instrumento_raw == "ATA":
         if _converter_para_sim(prorroga):
-            clausula_prorroga = config.TEXTOS.get("clausula_ata", "")
-            if not clausula_prorroga:
-                clausula_prorroga = config.TEXTOS.get("clausula_padrao", "")
             texto_prorroga = "podendo ser prorrogado por igual período, nos termos do art. 84 da Lei Federal nº 14.133/2021"
             texto_prorroga_sn = "Sim"
         else:
-            clausula_prorroga = ""
             texto_prorroga = "e será improrrogável"
             texto_prorroga_sn = "Não"
     else:
         if _converter_para_sim(prorroga):
-            clausula_prorroga = config.TEXTOS.get("clausula_padrao", "")
             texto_prorroga = "podendo ser prorrogado por igual período, nos termos dos arts. 106 e 107 da Lei Federal nº 14.133/2021, e art. 68 do Decreto Municipal nº 2056/24"
             texto_prorroga_sn = "Sim"
         else:
-            clausula_prorroga = ""
             texto_prorroga = "e será improrrogável"
             texto_prorroga_sn = "Não"
         
-    resultado["{{PRORROGA_CLAUS}}"] = clausula_prorroga
+    resultado["{{PRORROGA_CLAUS}}"] = ""
     resultado["{{PRORROGA}}"] = texto_prorroga
     resultado["{{PRORROGA_SN}}"] = texto_prorroga_sn
 
     meepp = dados_usuario.get("{{ME_EPP}}", "NAO")
-    if _converter_para_sim(meepp):
-        texto_meepp = config.TEXTOS.get("meepp_exclusivo", "")
-    else:
-        texto_meepp = config.TEXTOS.get("meepp_nao_exclusivo", "")
-    resultado["{{ME_EPP_TR}}"] = texto_meepp
+    resultado["{{ME_EPP_TR}}"] = ""
 
     resultado["{{ME_EPP}}"] = (
         "Exclusiva para ME/EPP" if _converter_para_sim(meepp)

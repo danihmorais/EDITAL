@@ -46,19 +46,22 @@ def gerar_edital(tipo_edital: str, dados_preenchimento: dict):
     mod_abr = MOD_ABR_MAP.get(modalidade_raw, "PE")
     modalidade_nome = MODALIDADE_TEXTO.get(modalidade_raw, "Pregão Eletrônico")
     
-    num_mod = dados_processados.get("{{N.MODALIDADE}}", "00")
-    num_proc = dados_processados.get("{{N.PROCESSO}}", "00")
+    num_mod_raw = str(dados_processados.get("{{N.MODALIDADE}}", "00"))
+    num_proc_raw = str(dados_processados.get("{{N.PROCESSO}}", "00"))
+    
+    num_mod_arq = num_mod_raw.replace("/", "-").replace("\\", "-")
+    num_proc_arq = num_proc_raw.replace("/", "-").replace("\\", "-")
     
     dados_edital = dados_processados.copy()
     dados_edital["{{MINUTA DE}}"] = ""
-    nome_arq_edital = f"{modalidade_nome} {num_mod} Proc {num_proc} - {mod_abr} 15.04.2026.docx"
+    nome_arq_edital = f"{modalidade_nome} {num_mod_arq} Proc {num_proc_arq} - {mod_abr} 15.04.2026.docx"
     caminho_edital = os.path.join(diretorio_saida, nome_arq_edital)
     preencher_documento(caminho_modelo, caminho_edital, dados_edital)
     
     dados_minuta = dados_processados.copy()
     dados_minuta["{{N.MODALIDADE}}"] = "XX"
     dados_minuta["{{MINUTA DE}}"] = "MINUTA DE "
-    nome_arq_minuta = f"{modalidade_nome} XX Proc {num_proc} - MINUTA DE {mod_abr} 15.04.2026.docx"
+    nome_arq_minuta = f"{modalidade_nome} XX Proc {num_proc_arq} - MINUTA DE {mod_abr} 15.04.2026.docx"
     caminho_minuta = os.path.join(diretorio_saida, nome_arq_minuta)
     preencher_documento(caminho_modelo, caminho_minuta, dados_minuta)
 
