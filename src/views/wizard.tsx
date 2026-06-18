@@ -13,6 +13,9 @@ export default function Wizard() {
     numeroModalidade: "",
     modalidade: "PREGAO_ELETRONICO",
     criterios: "ITEM",
+    tipoObjeto: "AQUISICAO",
+    dotacao: "",
+    arquivoMagnetico: false,
     dataEdital: "",
     dataSessao: "",
     horaSessao: "",
@@ -21,6 +24,10 @@ export default function Wizard() {
     objeto: "",
     gestores: [],
     fiscais: [],
+    vistoria: false,
+    textoVistoria: "",
+    amostra: false,
+    textoAmostra: "",
     vigencia: "",
     declAdicionais: "",
     valor: "",
@@ -90,7 +97,6 @@ export default function Wizard() {
 
       setGeracaoSucesso(true);
     } catch (erro: any) {
-      console.error("Erro completo:", erro);
       let msg: string;
       if (typeof erro === "string") {
         msg = erro;

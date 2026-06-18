@@ -21,6 +21,24 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                 paragrafo.text = paragrafo.text.replace(marcador, str(valor))
                 
     for tabela in doc.tables:
+        colunas_para_remover = []
+        for i, coluna in enumerate(tabela.columns):
+            remover_esta = False
+            for cell in coluna.cells:
+                if "__REMOVER_COLUNA__" in cell.text:
+                    remover_esta = True
+                    break
+            if remover_esta:
+                colunas_para_remover.append(i)
+        
+        for col_idx in reversed(colunas_para_remover):
+            for row in tabela.rows:
+                try:
+                    tc = row.cells[col_idx]._tc
+                    tc.getparent().remove(tc)
+                except Exception:
+                    pass
+                    
         for linha in tabela.rows:
             for celula in linha.cells:
                 for paragrafo in celula.paragraphs:

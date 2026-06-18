@@ -148,15 +148,37 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
             continue
         resultado[chave] = valor
     
-    amostra_opt = dados_usuario.get("{{AMOST}}", "nao")
-    texto_amostra = config.TEXTOS.get("amostra_tr", "") if _converter_para_sim(amostra_opt) else ""
-    resultado["{{AMOSTRA}}"] = texto_amostra
-    resultado["{{AMOSTRA_TR}}"] = texto_amostra
+    amostra_check = _converter_para_sim(dados_usuario.get("{{AMOSTRA_CHECK}}", "NAO"))
+    if amostra_check:
+        resultado["{{AMOSTRA}}"] = dados_usuario.get("{{AMOSTRA_TXT}}", "")
+    else:
+        resultado["{{AMOSTRA}}"] = ""
 
-    vistoria_opt = dados_usuario.get("{{VIST}}", "nao")
-    texto_vistoria = config.TEXTOS.get("vistoria_tr", "") if _converter_para_sim(vistoria_opt) else ""
-    resultado["{{VISTORIA}}"] = texto_vistoria
-    resultado["{{VISTORIA_TR}}"] = texto_vistoria
+    vistoria_check = _converter_para_sim(dados_usuario.get("{{VISTORIA_CHECK}}", "NAO"))
+    if vistoria_check:
+        resultado["{{VISTORIA}}"] = dados_usuario.get("{{VISTORIA_TXT}}", "")
+    else:
+        resultado["{{VISTORIA}}"] = ""
+        
+    resultado["{{DOTACAO}}"] = dados_usuario.get("{{DOTACAO}}", "")
+    
+    tipo_objeto = dados_usuario.get("{{TIPO_OBJETO}}", "AQUISICAO")
+    if tipo_objeto == "SERVICO":
+        resultado["{{PRAZO PUB}}"] = "*(...)\nII - no caso de serviços e obras:\n***10 (dez) dias úteis***, quando adotados os critérios de julgamento de menor preço ou de maior desconto, no caso de serviços comuns e de obras e serviços comuns de engenharia; (grifo nosso)*"
+        resultado["{{UNID}}"] = "__REMOVER_COLUNA__"
+    else:
+        resultado["{{PRAZO PUB}}"] = "*I - para aquisição de bens:\n***8 (oito) dias úteis***, quando adotados os critérios de julgamento de menor preço ou de maior desconto; (grifo nosso)*"
+        resultado["{{UNID}}"] = "MARCA/MODELO"
+
+    arq_mag = _converter_para_sim(dados_usuario.get("{{ARQ_MAG_CHECK}}", "NAO"))
+    if arq_mag:
+        resultado["{{ARQ MAG}}"] = "Adicionalmente, o licitante deverá OBRIGATORIAMENTE preencher o arquivo magnético e armazená-lo em um pen-drive próprio, às suas custas, INDEPENDENTEMENTE DE QUANTOS ITENS FOR PARTICIPAR, devendo ele estar acondicionado dentro do envelope “01 – PROPOSTA COMERCIAL” junto com a proposta impressa.\n\tA instrução de acondicionar o pen-drive dentro do envelope vista orientar licitantes que somente enviem suas propostas via Correios. No caso de licitantes credenciados, poderá ser aceito a entrega do arquivo magnético em mãos, fora do envelope.\nO arquivo para preenchimento estará disponível, junto com o tutorial, no site da prefeitura municipal, em link próprio, junto do presente Edital, com o nome “ARQUIVO MAGNÉTICO”.\nCaso haja necessidade, o licitante poderá solicitar o arquivo magnético para preenchimento previamente à sessão pública, junto com o tutorial, no e-mail licitacao@saofrancisco.sp.gov.br.\nQuaisquer dúvidas sobre o funcionamento do arquivo magnético deverão ser dirimidas ANTES da sessão pública por meio do telefone (17) 3693-1101 ou e-mail licitacao@saofrancisco.sp.gov.br."
+        resultado["{{ARQ MAG 2}}"] = "ou operar o arquivo magnético"
+        resultado["{{ARQ MAG 3}}"] = "ou arquivo magnético"
+    else:
+        resultado["{{ARQ MAG}}"] = ""
+        resultado["{{ARQ MAG 2}}"] = ""
+        resultado["{{ARQ MAG 3}}"] = ""
 
     instrumento_raw = dados_usuario.get("{{INSTRUMENTO}}", "CONTRATO")
     resultado["E_ARP"] = True if instrumento_raw == "ATA" else False

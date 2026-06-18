@@ -24,7 +24,6 @@ function PessoaList({ label, singularLabel, items, onChange }: PessoaListProps) 
 
   return (
     <div>
-      {/* Cabeçalho */}
       <div
         style={{
           display: "flex",
@@ -65,7 +64,6 @@ function PessoaList({ label, singularLabel, items, onChange }: PessoaListProps) 
         </button>
       </div>
 
-      {/* Linhas */}
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         {items.length === 0 && (
           <p
@@ -98,7 +96,6 @@ function PessoaList({ label, singularLabel, items, onChange }: PessoaListProps) 
               borderRadius: "var(--radius)",
             }}
           >
-            {/* Número */}
             <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
               <span
                 style={{
@@ -122,7 +119,6 @@ function PessoaList({ label, singularLabel, items, onChange }: PessoaListProps) 
               </span>
             </div>
 
-            {/* Nome */}
             <div>
               <div style={{ fontSize: "11px", color: "var(--text-light)", marginBottom: "4px", fontWeight: 500 }}>
                 Nome
@@ -136,7 +132,6 @@ function PessoaList({ label, singularLabel, items, onChange }: PessoaListProps) 
               />
             </div>
 
-            {/* Cargo */}
             <div>
               <div style={{ fontSize: "11px", color: "var(--text-light)", marginBottom: "4px", fontWeight: 500 }}>
                 Cargo
@@ -150,7 +145,6 @@ function PessoaList({ label, singularLabel, items, onChange }: PessoaListProps) 
               />
             </div>
 
-            {/* Remover */}
             <button
               type="button"
               onClick={() => remove(i)}
@@ -200,6 +194,53 @@ export default function Step2({ dados, atualizarDados }: any) {
           placeholder="Descreva o objeto da licitação (conforme consta no TR)..."
         />
       </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <input
+            type="checkbox"
+            checked={dados.vistoria || false}
+            onChange={(e) => atualizarDados({ vistoria: e.target.checked })}
+            style={{ width: "18px", height: "18px", cursor: "pointer" }}
+            id="chkVistoria"
+          />
+          <label htmlFor="chkVistoria" style={{ color: "var(--text-main)", fontWeight: "bold", cursor: "pointer" }}>
+            Exigir Vistoria
+          </label>
+        </div>
+        {dados.vistoria && (
+          <textarea
+            value={dados.textoVistoria || ""}
+            onChange={(e) => atualizarDados({ textoVistoria: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "80px" }}
+            placeholder="Descreva as condições da vistoria..."
+          />
+        )}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <input
+            type="checkbox"
+            checked={dados.amostra || false}
+            onChange={(e) => atualizarDados({ amostra: e.target.checked })}
+            style={{ width: "18px", height: "18px", cursor: "pointer" }}
+            id="chkAmostra"
+          />
+          <label htmlFor="chkAmostra" style={{ color: "var(--text-main)", fontWeight: "bold", cursor: "pointer" }}>
+            Exigir Amostra
+          </label>
+        </div>
+        {dados.amostra && (
+          <textarea
+            value={dados.textoAmostra || ""}
+            onChange={(e) => atualizarDados({ textoAmostra: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "80px" }}
+            placeholder="Descreva as condições da amostra..."
+          />
+        )}
+      </div>
+
       <PessoaList
         label="Gestores"
         singularLabel="Gestor"

@@ -58,7 +58,14 @@ export const mapearDadosWizard = (dados: any) => {
         "{{MODALIDADE}}": dados.modalidade || "PREGAO_ELETRONICO",
         "{{MODALIDADE_NOME}}": modalidadeFormatada,
         "{{DECL.ADICIONAIS}}": dados.declAdicionais || "",
-        "{{VIGENCIA}}": dados.vigencia || ""
+        "{{VIGENCIA}}": dados.vigencia || "",
+        "{{DOTACAO}}": dados.dotacao || "",
+        "{{TIPO_OBJETO}}": dados.tipoObjeto || "AQUISICAO",
+        "{{VISTORIA_CHECK}}": dados.vistoria ? "SIM" : "NAO",
+        "{{VISTORIA_TXT}}": dados.textoVistoria || "",
+        "{{AMOSTRA_CHECK}}": dados.amostra ? "SIM" : "NAO",
+        "{{AMOSTRA_TXT}}": dados.textoAmostra || "",
+        "{{ARQ_MAG_CHECK}}": dados.arquivoMagnetico && dados.modalidade === "PREGAO_PRESENCIAL" ? "SIM" : "NAO",
     },
     arquivoBase: arquivoBase
   };

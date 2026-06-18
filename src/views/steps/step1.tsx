@@ -31,7 +31,7 @@ export default function Step1({ dados, atualizarDados }: any) {
           <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Modalidade</label>
           <select
             value={dados.modalidade || "PREGAO_ELETRONICO"}
-            onChange={(e) => atualizarDados({ modalidade: e.target.value })}
+            onChange={(e) => atualizarDados({ modalidade: e.target.value, arquivoMagnetico: e.target.value !== "PREGAO_PRESENCIAL" ? false : dados.arquivoMagnetico })}
             style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
           >
             <option value="PREGAO_ELETRONICO">Pregão Eletrônico</option>
@@ -53,6 +53,45 @@ export default function Step1({ dados, atualizarDados }: any) {
           </select>
         </div>
       </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", }}>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Tipo de Objeto</label>
+          <select
+            value={dados.tipoObjeto || "AQUISICAO"}
+            onChange={(e) => atualizarDados({ tipoObjeto: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+          >
+            <option value="AQUISICAO">Aquisição</option>
+            <option value="SERVICO">Serviço</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Dotação Orçamentária</label>
+          <input
+            type="text"
+            value={dados.dotacao || ""}
+            onChange={(e) => atualizarDados({ dotacao: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            placeholder="Informe a dotação"
+          />
+        </div>
+      </div>
+
+      {dados.modalidade === "PREGAO_PRESENCIAL" && (
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+          <input
+            type="checkbox"
+            checked={dados.arquivoMagnetico || false}
+            onChange={(e) => atualizarDados({ arquivoMagnetico: e.target.checked })}
+            style={{ width: "18px", height: "18px", cursor: "pointer" }}
+            id="chkArquivoMagnetico"
+          />
+          <label htmlFor="chkArquivoMagnetico" style={{ color: "var(--text-main)", fontWeight: "bold", cursor: "pointer" }}>
+            Exigir Arquivo Magnético
+          </label>
+        </div>
+      )}
 
       <div>
         <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Data do Edital</label>
