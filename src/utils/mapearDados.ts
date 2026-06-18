@@ -30,18 +30,24 @@ export const mapearDadosWizard = (dados: any) => {
 
   return {
     dadosMapeados: {
-        "{{NUMERO_PROCESSO}}": dados.numeroProcesso || "",
-        "{{NUMERO_EDITAL}}": dados.numeroEdital || "",
+        "{{N.MODALIDADE}}": dados.numeroModalidade || "",
+        "{{N.PROCESSO}}": dados.numeroProcesso || "",
         "{{OBJETO}}": dados.objeto || "",
-        "{{DATA_SESSAO}}": dados.dataSessao || "",
+        "{{CRITERIO}}": dados.criterio || "ITEM",
+        "{{GESTOR}}": dados.gestor || "",
+        "{{FISCAL}}": dados.fiscal || "",
+        "{{DATA DO EDITAL}}": dados.dataEdital || "",
+        "{{DATA DA SESSAO}}": dados.dataSessao || "",
+        "{{DATA REC PROP1}}": dados.dataRecProp1 || "",
+        "{{DATA REC PROP2}}": dados.dataRecProp2 || "",
+        "{{HORA SESSAO}}": dados.horaSessao || "",
         "{{HORA_SESSAO}}": dados.horaSessao || "",
         "{{LOCAL_SESSAO}}": dados.localSessao || "",
         "{{UASG}}": dados.uasg || "",
         "{{VALOR_ESTIMADO}}": valorEstimadoFormatado,
         "{{ITENS}}": JSON.stringify(itens),
         "{{MODALIDADE}}": dados.modalidade || "PREGAO_ELETRONICO",
-        "{{MODALIDADE_NOME}}": modalidadeFormatada,
-        "{{CRITERIO}}": dados.criterio || "ITEM"
+        "{{MODALIDADE_NOME}}": modalidadeFormatada
     },
     arquivoBase: arquivoBase
   };

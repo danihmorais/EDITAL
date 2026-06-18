@@ -1,4 +1,5 @@
 import config
+from datetime import datetime, timedelta
 
 INSTRUMENTO_TEXTO = {
     "CONTRATO": "Contrato Administrativo",
@@ -11,6 +12,7 @@ MODALIDADE_TEXTO = {
     "DISPENSA_EMAIL": "Dispensa Eletrônica por E-mail",
     "DISPENSA_BLL": "Dispensa Eletrônica com Lances (BLL)",
     "PREGAO_PRESENCIAL": "Pregão Presencial",
+    "DISPENSA": "Dispensa Eletrônica"
 }
 
 CRITERIOS_TEXTO = {
@@ -55,7 +57,7 @@ CRITERIOS_TEXTO_LONGO = {
     ),
     "LOTE": (
         "Para o processamento da presente licitação, optou-se fundamentadamente pela adoção do critério de julgamento de menor preço por lote (ou grupo de itens). Este critério representa o ponto de equilíbrio operacional ideal entre a necessidade técnica de manter itens correlatos unidos e a obrigação legal de promover a mais ampla competitividade através do parcelamento do objeto.\n"
-        "A formação estruturada de lotes justifica-se tanto pela viabilidade econômica quanto pela indiscutível afinidade técnica entre os elementos agrupados. A separação desses mesmos itens de forma estritamente individualizada tenderia a desinteressar fornecedores potenciais devido ao baixo atrativo comercial de itens isolados, ou geraria custos logísticos e de transporte desproporcionais, encarecendo o valor final para a Administração.\n"
+        "A formação estruturada de lotes justifica-se tanto pela viabilidade econômica quanto pela indiscutível affinity técnica entre os elementos agrupados. A separação desses mesmos itens de forma estritamente individualizada tenderia a desinteressar fornecedores potenciais devido ao baixo atrativo comercial de itens isolados, ou geraria custos logísticos e de transporte desproporcionais, encarecendo o valor final para a Administração.\n"
         "Assim, o agrupamento lógico otimiza a futura gestão contratual, centraliza e simplifica a logística de entrega para categorias afins de materiais ou serviços e minimiza os custos administrativos decorrentes do acompanhamento. Ao mesmo tempo, preserva a isonomia e a competitividade, permitindo que os licitantes disputem exatamente os blocos que integram seu legítimo escopo de atuação no mercado."
     )
 }
@@ -72,14 +74,11 @@ CHAVES_RAW = {
 SIM_VALORES = {"sim", "s", "x", "true", "1"}
 NAO_VALORES = {"não", "nao", "n", "", "false", "0"}
 
-
 def _normalizar_sim_nao(valor) -> str:
     return str(valor).strip().casefold()
 
-
 def _converter_para_sim(valor) -> bool:
     return _normalizar_sim_nao(valor) in SIM_VALORES
-
 
 def _formatar_lista_assinaturas(nomes_str: str, cargos_str: str):
     nomes = [nome.strip() for nome in nomes_str.split(",") if nome.strip()]
@@ -90,6 +89,29 @@ def _formatar_lista_assinaturas(nomes_str: str, cargos_str: str):
         resultado.append(f"{nome} ({cargo})" if cargo else nome)
     return resultado
 
+def _formatar_hora_min(hora_str: str) -> str:
+    if not hora_str:
+        return ""
+    try:
+        t = datetime.strptime(hora_str, "%H:%M")
+        return t.strftime("%Hh%Mmin")
+    except Exception:
+        return hora_str
+
+def _subtrair_15_min(hora_str: str) -> str:
+    if not hora_str:
+        return ""
+    try:
+        t = datetime.strptime(hora_str, "%H:%M")
+        t_sub = t - timedelta(minutes=15)
+        return t_sub.strftime("%Hh%Mmin")
+    except Exception:
+        return hora_str
+
+def _formatar_multiplos(valor: str) -> str:
+    if not valor:
+        return ""
+    return str(valor).replace(",", "\n").replace(";", "\n")
 
 def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     resultado = {}
@@ -165,6 +187,9 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     fiscais_str = dados_usuario.get("{{FISCAL}}", "")
     cargos_fiscais_str = dados_usuario.get("{{FISCAL_CARGO}}", "")
 
+    resultado["{{GESTOR}}"] = _formatar_multiplos(gestores_str)
+    resultado["{{FISCAL}}"] = _formatar_multiplos(fiscais_str)
+
     assinaturas_blocos = []
 
     if gestores_str and gestores_str != "[Não informado]":
@@ -194,8 +219,21 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         else "[Não informado]"
     )
 
-    return resultado
+    hora_sessao = dados_usuario.get("{{HORA_SESSAO}}", "")
+    if not hora_sessao and "{{HORA SESSAO}}" in dados_usuario:
+        hora_sessao = dados_usuario["{{HORA SESSAO}}"]
+        
+    if hora_sessao:
+        resultado["{{HORA SESSAO}}"] = _formatar_hora_min(hora_sessao)
+        resultado["{{HORA_SESSAO}}"] = _formatar_hora_min(hora_sessao)
+        resultado["{{HORA FIM DO REC}}"] = _subtrair_15_min(hora_sessao)
+        
+        if modalidade_raw == "PREGAO_PRESENCIAL":
+            resultado["{{HORA INICIO CRED}}"] = _subtrair_15_min(hora_sessao)
+        else:
+            resultado["{{HORA INICIO CRED}}"] = ""
 
+    return resultado
 
 def filtrar_chaves_docx(dados: dict) -> dict:
     return {k: v for k, v in dados.items() if k.startswith("{{") and k.endswith("}}")}
