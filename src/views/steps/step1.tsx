@@ -1,3 +1,4 @@
+// src/views/steps/step1.tsx
 import React from "react";
 
 export default function Step1({ dados, atualizarDados }: any) {
@@ -74,6 +75,29 @@ export default function Step1({ dados, atualizarDados }: any) {
             onChange={(e) => atualizarDados({ dotacao: e.target.value })}
             style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
             placeholder="Informe a dotação"
+          />
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", }}>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Quantidade de Itens</label>
+          <input
+            type="number"
+            value={dados.quantidadeItens || ""}
+            onChange={(e) => atualizarDados({ quantidadeItens: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            placeholder="Ex: 5"
+          />
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Quantidade de Lotes</label>
+          <input
+            type="number"
+            value={dados.quantidadeLotes || ""}
+            onChange={(e) => atualizarDados({ quantidadeLotes: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+            placeholder="Ex: 2"
           />
         </div>
       </div>

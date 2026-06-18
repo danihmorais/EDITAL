@@ -1,9 +1,29 @@
+// src/utils/mapearDados.ts
+
+function numeroPorExtenso(numero: number): string {
+  if (isNaN(numero)) return "";
+  if (numero === 0) return "zero";
+  const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+  const dezenas = ["", "dez", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+  const centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+
+  if (numero === 100) return "cem";
+
+  if (numero < 20) return unidades[numero];
+  if (numero < 100) {
+    const d = Math.floor(numero / 10);
+    const u = numero % 10;
+    return dezenas[d] + (u > 0 ? " e " + unidades[u] : "");
+  }
+  if (numero < 1000) {
+    const c = Math.floor(numero / 100);
+    const r = numero % 100;
+    return centenas[c] + (r > 0 ? " e " + numeroPorExtenso(r) : "");
+  }
+  return numero.toString();
+}
+
 export const mapearDadosWizard = (dados: any) => {
-  const itens = dados.itens || [];
-  const totalItens = itens.reduce((acc: number, i: any) => acc + (Number(i.qtd || 0) * Number(i.valor || 0)), 0);
-  const valorEstimadoFormatado = totalItens.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  const valorEstimadoPuro = totalItens.toFixed(2);
-  
   let modalidadeFormatada = "";
   let arquivoBase = "";
   
@@ -35,6 +55,25 @@ export const mapearDadosWizard = (dados: any) => {
   const fiscaisNomes = (dados.fiscais || []).map((f: any) => f.nome).join(", ");
   const fiscaisCargos = (dados.fiscais || []).map((f: any) => f.cargo).join(", ");
 
+  const qtdItens = Number(dados.quantidadeItens || 0);
+  const itensFormatado = qtdItens > 0 ? `${qtdItens} (${numeroPorExtenso(qtdItens)})` : "";
+
+  const qtdLotes = Number(dados.quantidadeLotes || 0);
+  const lotesFormatado = qtdLotes > 0 ? `${qtdLotes} (${numeroPorExtenso(qtdLotes)})` : "";
+
+  let docText = "";
+  let docCount = 12;
+  const docs = dados.documentosAdicionais || [];
+  for (const doc of docs) {
+    if (doc.trim()) {
+      docText += `***(DOCUMENTO ${docCount.toString().padStart(2, '0')})*** ${doc.trim()}\n`;
+      docCount++;
+    }
+  }
+  
+  const declNum = docCount.toString().padStart(2, '0');
+  const propNum = (docCount + 1).toString().padStart(2, '0');
+
   return {
     dadosMapeados: {
         "{{N.MODALIDADE}}": dados.numeroModalidade || "",
@@ -51,10 +90,13 @@ export const mapearDadosWizard = (dados: any) => {
         "{{DATA REC PROP2}}": dados.dataRecProp2 || "",
         "{{HORA SESSAO}}": dados.horaSessao || "",
         "{{HORA_SESSAO}}": dados.horaSessao || "",
-        "{{VALOR_ESTIMADO}}": valorEstimadoFormatado,
-        "{{VALOR}}": dados.valor || valorEstimadoPuro,
+        "{{VALOR}}": dados.valor || "",
         "{{EXCLUSIVO}}": dados.exclusivo || "NAO",
-        "{{ITENS}}": JSON.stringify(itens),
+        "{{ITENS}}": itensFormatado,
+        "{{LOTE2}}": lotesFormatado,
+        "{{DOCUMENTOS ADICIONAIS}}": docText,
+        "{{DECL}}": declNum,
+        "{{PROP}}": propNum,
         "{{MODALIDADE}}": dados.modalidade || "PREGAO_ELETRONICO",
         "{{MODALIDADE_NOME}}": modalidadeFormatada,
         "{{DECL.ADICIONAIS}}": dados.declAdicionais || "",
