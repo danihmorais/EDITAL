@@ -251,3 +251,9 @@ fn abrir_pasta_documentos() -> Result<(), String> {
 
     Ok(())
 }
+
+#[tauri::command]
+fn gerar_edital(dados: String) -> Result<(), String> {
+    println!("Dados recebidos para gerar edital: {}", dados);
+    Ok(())
+}

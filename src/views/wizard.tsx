@@ -11,11 +11,9 @@ export default function Wizard() {
   const [dados, setDados] = useState({
     numeroProcesso: "",
     numeroEdital: "",
-    uasg: "",
     modalidade: "PREGAO_ELETRONICO",
     dataSessao: "",
     horaSessao: "",
-    localSessao: "",
     anexosProntos: false,
     objeto: "",
     itens: [],

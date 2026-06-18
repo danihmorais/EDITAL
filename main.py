@@ -1,11 +1,7 @@
-from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import os
-import uvicorn
 from processador_docx import preencher_documento
 from montador_variaveis import montar_variaveis_fixas
-
-app = FastAPI()
 
 class EditalRequest(BaseModel):
     tipo_edital: str
@@ -32,15 +28,8 @@ MODALIDADE_TEXTO = {
     "PREGAO_PRESENCIAL": "Pregão Presencial"
 }
 
-@app.post("/gerar")
 def gerar_edital(request: EditalRequest):
     caminho_modelo = MODELOS_DISPONIVEIS.get(request.tipo_edital)
-    
-    if not caminho_modelo:
-        raise HTTPException(status_code=400, detail="Tipo de edital inválido.")
-        
-    if not os.path.exists(caminho_modelo):
-        raise HTTPException(status_code=404, detail="Arquivo de modelo não encontrado no servidor.")
 
     diretorio_saida = "editais_gerados"
     os.makedirs(diretorio_saida, exist_ok=True)
@@ -74,4 +63,4 @@ def gerar_edital(request: EditalRequest):
     }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    processar()

@@ -42,8 +42,6 @@ export const mapearDadosWizard = (dados: any) => {
         "{{DATA REC PROP2}}": dados.dataRecProp2 || "",
         "{{HORA SESSAO}}": dados.horaSessao || "",
         "{{HORA_SESSAO}}": dados.horaSessao || "",
-        "{{LOCAL_SESSAO}}": dados.localSessao || "",
-        "{{UASG}}": dados.uasg || "",
         "{{VALOR_ESTIMADO}}": valorEstimadoFormatado,
         "{{ITENS}}": JSON.stringify(itens),
         "{{MODALIDADE}}": dados.modalidade || "PREGAO_ELETRONICO",
