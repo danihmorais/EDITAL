@@ -9,33 +9,41 @@ export const mapearDadosWizard = (dados: any) => {
   switch(dados.modalidade) {
     case "PREGAO_ELETRONICO":
       modalidadeFormatada = "Pregão Eletrônico";
-      arquivoBase = "Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx";
+      arquivoBase = "pregao_eletronico";
       break;
     case "PREGAO_PRESENCIAL":
       modalidadeFormatada = "Pregão Presencial";
-      arquivoBase = "Pregão xx Proc xx -  MINUTA PP 15.04.2026.docx";
+      arquivoBase = "pregao_presencial";
       break;
     case "DISPENSA":
       modalidadeFormatada = "Dispensa Eletrônica";
-      arquivoBase = "Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx";
+      arquivoBase = "dispensa";
       break;
     case "DISPENSA_BLL":
       modalidadeFormatada = "Dispensa Eletrônica BLL";
-      arquivoBase = "Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx";
+      arquivoBase = "dispensa_bll";
       break;
     default:
       modalidadeFormatada = "Pregão Eletrônico";
-      arquivoBase = "Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx";
+      arquivoBase = "pregao_eletronico";
   }
+
+  const gestoresNomes = (dados.gestores || []).map((g: any) => g.nome).join(", ");
+  const gestoresCargos = (dados.gestores || []).map((g: any) => g.cargo).join(", ");
+  
+  const fiscaisNomes = (dados.fiscais || []).map((f: any) => f.nome).join(", ");
+  const fiscaisCargos = (dados.fiscais || []).map((f: any) => f.cargo).join(", ");
 
   return {
     dadosMapeados: {
         "{{N.MODALIDADE}}": dados.numeroModalidade || "",
         "{{N.PROCESSO}}": dados.numeroProcesso || "",
         "{{OBJETO}}": dados.objeto || "",
-        "{{CRITERIO}}": dados.criterio || "ITEM",
-        "{{GESTOR}}": dados.gestor || "",
-        "{{FISCAL}}": dados.fiscal || "",
+        "{{CRITERIOS}}": dados.criterios || "ITEM",
+        "{{GESTOR}}": gestoresNomes,
+        "{{GESTOR_CARGO}}": gestoresCargos,
+        "{{FISCAL}}": fiscaisNomes,
+        "{{FISCAL_CARGO}}": fiscaisCargos,
         "{{DATA DO EDITAL}}": dados.dataEdital || "",
         "{{DATA DA SESSAO}}": dados.dataSessao || "",
         "{{DATA REC PROP1}}": dados.dataRecProp1 || "",
@@ -45,7 +53,9 @@ export const mapearDadosWizard = (dados: any) => {
         "{{VALOR_ESTIMADO}}": valorEstimadoFormatado,
         "{{ITENS}}": JSON.stringify(itens),
         "{{MODALIDADE}}": dados.modalidade || "PREGAO_ELETRONICO",
-        "{{MODALIDADE_NOME}}": modalidadeFormatada
+        "{{MODALIDADE_NOME}}": modalidadeFormatada,
+        "{{DECL.ADICIONAIS}}": dados.declAdicionais || "",
+        "{{VIGENCIA}}": dados.vigencia || ""
     },
     arquivoBase: arquivoBase
   };

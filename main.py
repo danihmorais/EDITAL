@@ -1,11 +1,8 @@
-from pydantic import BaseModel
 import os
+import json
+import sys
 from processador_docx import preencher_documento
 from montador_variaveis import montar_variaveis_fixas
-
-class EditalRequest(BaseModel):
-    tipo_edital: str
-    dados_preenchimento: dict
 
 MODELOS_DISPONIVEIS = {
     "dispensa": "modelos/Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx",
@@ -17,8 +14,8 @@ MODELOS_DISPONIVEIS = {
 MOD_ABR_MAP = {
     "PREGAO_PRESENCIAL": "PP",
     "PREGAO_ELETRONICO": "PE",
-    "DISPENSA_BLL": "DE",
-    "DISPENSA": "DP"
+    "DISPENSA_BLL": "DP",
+    "DISPENSA": "DE"
 }
 
 MODALIDADE_TEXTO = {
@@ -28,13 +25,16 @@ MODALIDADE_TEXTO = {
     "PREGAO_PRESENCIAL": "Pregão Presencial"
 }
 
-def gerar_edital(request: EditalRequest):
-    caminho_modelo = MODELOS_DISPONIVEIS.get(request.tipo_edital)
+def gerar_edital(tipo_edital: str, dados_preenchimento: dict):
+    caminho_modelo = MODELOS_DISPONIVEIS.get(tipo_edital)
+
+    if not caminho_modelo or not os.path.exists(caminho_modelo):
+        return {"sucesso": False, "erro": f"Modelo não encontrado para o tipo: {tipo_edital}"}
 
     diretorio_saida = "editais_gerados"
     os.makedirs(diretorio_saida, exist_ok=True)
     
-    dados_processados = montar_variaveis_fixas(request.dados_preenchimento)
+    dados_processados = montar_variaveis_fixas(dados_preenchimento)
     
     modalidade_raw = dados_processados.get("{{MODALIDADE}}", "PREGAO_ELETRONICO")
     mod_abr = MOD_ABR_MAP.get(modalidade_raw, "PE")
@@ -61,6 +61,28 @@ def gerar_edital(request: EditalRequest):
         "caminhos": [caminho_edital, caminho_minuta],
         "caminho_arquivo": caminho_edital
     }
+
+def processar():
+    try:
+        if len(sys.argv) > 1:
+            conteudo = sys.argv[1]
+        else:
+            conteudo = sys.stdin.read()
+            
+        if not conteudo.strip():
+            print(json.dumps({"sucesso": False, "erro": "Nenhum dado recebido"}))
+            return
+            
+        requisicao = json.loads(conteudo)
+        
+        tipo_edital = requisicao.get("tipo_edital")
+        dados_preenchimento = requisicao.get("dados_preenchimento", {})
+        
+        resultado = gerar_edital(tipo_edital, dados_preenchimento)
+        print(json.dumps(resultado))
+        
+    except Exception as e:
+        print(json.dumps({"sucesso": False, "erro": str(e)}))
 
 if __name__ == "__main__":
     processar()

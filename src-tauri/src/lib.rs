@@ -4,43 +4,52 @@ use std::path::PathBuf;
 use std::process::Stdio;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
-use tauri::{AppHandle, Manager, State};
+use tauri::AppHandle;
 use tauri_plugin_opener::OpenerExt;
 
-pub struct AppState {
-    pub http_client: reqwest::Client,
+fn get_base_dir() -> Result<PathBuf, String> {
+    std::env::current_exe()
+        .map_err(|e| e.to_string())?
+        .parent()
+        .ok_or("Não foi possível localizar o diretório do executável".to_string())
+        .map(|p| p.to_path_buf())
 }
 
 fn extrair_recursos() -> Result<PathBuf, String> {
-    let temp_dir = std::env::temp_dir().join("licita_ai_runtime");
-    fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
+    let base_dir = get_base_dir()?;
 
+    let python_path = base_dir.join("python_backend.exe");
     let python_exe = include_bytes!("../bin/python_backend.exe");
-    fs::write(temp_dir.join("python_backend.exe"), python_exe).map_err(|e| e.to_string())?;
+    // Ignoramos o erro aqui propositalmente. Se o app estiver aberto, o executável pode estar travado,
+    // então ele simplesmente usará o que já existe lá.
+    let _ = fs::write(&python_path, python_exe);
 
-    let modelos_dir = temp_dir.join("modelos");
-    fs::create_dir_all(&modelos_dir).map_err(|e| e.to_string())?;
+    let modelos_dir = base_dir.join("modelos");
+    let _ = fs::create_dir_all(&modelos_dir);
 
     let dispensa_de = include_bytes!("../../modelos/Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx");
     let dispensa_dp = include_bytes!("../../modelos/Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx");
     let pregao_pe = include_bytes!("../../modelos/Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx");
     let pregao_pp = include_bytes!("../../modelos/Pregão xx Proc xx -  MINUTA PP 15.04.2026.docx");
 
-    fs::write(modelos_dir.join("Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx"), dispensa_de).map_err(|e| e.to_string())?;
-    fs::write(modelos_dir.join("Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx"), dispensa_dp).map_err(|e| e.to_string())?;
-    fs::write(modelos_dir.join("Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx"), pregao_pe).map_err(|e| e.to_string())?;
-    fs::write(modelos_dir.join("Pregão xx Proc xx -  MINUTA PP 15.04.2026.docx"), pregao_pp).map_err(|e| e.to_string())?;
+    let _ = fs::write(modelos_dir.join("Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx"), dispensa_de);
+    let _ = fs::write(modelos_dir.join("Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx"), dispensa_dp);
+    let _ = fs::write(modelos_dir.join("Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx"), pregao_pe);
+    let _ = fs::write(modelos_dir.join("Pregão xx Proc xx -  MINUTA PP 15.04.2026.docx"), pregao_pp);
 
-    Ok(temp_dir)
+    Ok(base_dir)
 }
 
 #[tauri::command]
-async fn gerar_documentos(app: AppHandle, dados_usuario: Value, dados_ia: Value, arquivos_base: Vec<String>) -> Result<String, String> {
-    let temp_dir = extrair_recursos()?;
-    let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    let backend_path = temp_dir.join("python_backend.exe");
+async fn gerar_documentos(_app: AppHandle, dados_usuario: Value, arquivos_base: Vec<String>) -> Result<String, String> {
+    let base_dir = extrair_recursos()?;
+    let backend_path = base_dir.join("python_backend.exe");
+
+    // Pega o tipo do edital que veio no arquivoBase do mapearDados.ts
+    let tipo_edital = arquivos_base.first().cloned().unwrap_or_else(|| "pregao_eletronico".to_string());
 
     let mut child = Command::new(backend_path)
+        .current_dir(&base_dir) // Garante que o python rode na pasta certa para encontrar 'modelos/'
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -49,14 +58,8 @@ async fn gerar_documentos(app: AppHandle, dados_usuario: Value, dados_ia: Value,
 
     if let Some(mut stdin) = child.stdin.take() {
         let payload = json!({
-            "acao": "salvar_documentos",
-            "dados_ia": dados_ia,
-            "dados_usuario": dados_usuario,
-            "preenchimentos_manuais": {},
-            "pasta_saida": "Documentos_Gerados",
-            "pasta_modelos": temp_dir.join("modelos").to_string_lossy().to_string(),
-            "arquivos_base": arquivos_base,
-            "app_data_dir": app_dir.to_string_lossy().to_string()
+            "tipo_edital": tipo_edital,
+            "dados_preenchimento": dados_usuario
         });
 
         stdin.write_all(payload.to_string().as_bytes()).await.map_err(|e| e.to_string())?;
@@ -68,44 +71,6 @@ async fn gerar_documentos(app: AppHandle, dados_usuario: Value, dados_ia: Value,
     }
 
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
-}
-
-#[tauri::command]
-fn salvar_config_ia(app: AppHandle, provedor: String, chave: String) -> Result<(), String> {
-    let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
-    let settings_path = app_dir.join("settings.json");
-
-    let mut settings = if let Ok(content) = fs::read_to_string(&settings_path) {
-        serde_json::from_str::<Value>(&content).unwrap_or(json!({}))
-    } else {
-        json!({})
-    };
-
-    settings["provedor"] = json!(provedor);
-    settings["chave_api"] = json!(chave);
-
-    fs::write(settings_path, serde_json::to_string_pretty(&settings).unwrap_or_default())
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
-}
-
-#[tauri::command]
-fn ler_config_ia(app: AppHandle) -> Result<Value, String> {
-    let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    let settings_path = app_dir.join("settings.json");
-
-    if let Ok(content) = fs::read_to_string(settings_path) {
-        if let Ok(settings) = serde_json::from_str::<Value>(&content) {
-            return Ok(settings);
-        }
-    }
-
-    Ok(json!({
-        "provedor": "gemini",
-        "chave_api": ""
-    }))
 }
 
 #[tauri::command]
@@ -174,67 +139,10 @@ async fn aplicar_atualizacao(url: String) -> Result<(), String> {
     std::process::exit(0);
 }
 
-#[derive(serde::Serialize)]
-pub struct StatusApis {
-    pub gemini: bool,
-    pub openrouter: bool,
-}
-
-#[tauri::command]
-async fn verificar_status_apis(state: State<'_, AppState>) -> Result<StatusApis, String> {
-    let gemini = state.http_client
-        .get("https://generativelanguage.googleapis.com/$discovery/rest?version=v1beta")
-        .send()
-        .await
-        .map(|r| r.status().is_success())
-        .unwrap_or(false);
-
-    let openrouter = state.http_client
-        .get("https://openrouter.ai/api/v1/models")
-        .send()
-        .await
-        .map(|r| r.status().is_success())
-        .unwrap_or(false);
-
-    Ok(StatusApis { gemini, openrouter })
-}
-
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    let http_client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(5))
-        .build()
-        .expect("Falha ao construir o cliente HTTP");
-
-    tauri::Builder::default()
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_opener::init())
-        .manage(AppState { http_client })
-        .invoke_handler(tauri::generate_handler![
-            gerar_documentos,
-            salvar_config_ia,
-            ler_config_ia,
-            salvar_dados_usuario,
-            ler_dados_usuario,
-            abrir_link,
-            aplicar_atualizacao,
-            verificar_status_apis,
-            abrir_pasta_documentos,
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-}
-
 #[tauri::command]
 fn abrir_pasta_documentos() -> Result<(), String> {
-    let exe_dir = std::env::current_exe()
-        .map_err(|e| e.to_string())?
-        .parent()
-        .ok_or("Não foi possível localizar a pasta do executável")?
-        .to_path_buf();
-
-    let pasta = exe_dir.join("Documentos_Gerados");
+    let base_dir = get_base_dir()?;
+    let pasta = base_dir.join("editais_gerados");
 
     if !pasta.exists() {
         return Err(format!(
@@ -252,8 +160,20 @@ fn abrir_pasta_documentos() -> Result<(), String> {
     Ok(())
 }
 
-#[tauri::command]
-fn gerar_edital(dados: String) -> Result<(), String> {
-    println!("Dados recebidos para gerar edital: {}", dados);
-    Ok(())
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
+        .invoke_handler(tauri::generate_handler![
+            gerar_documentos,
+            salvar_dados_usuario,
+            ler_dados_usuario,
+            abrir_link,
+            aplicar_atualizacao,
+            abrir_pasta_documentos,
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
