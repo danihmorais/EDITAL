@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta
 
 CHAVES_RAW = {
@@ -55,17 +56,15 @@ def _limpar_valor_numerico(valor) -> float:
     if isinstance(valor, (int, float)):
         return float(valor)
     try:
-        v_str = str(valor).strip()
+        v_str = str(valor).upper().replace('R$', '').strip()
         if not v_str:
             return 0.0
-        v_str = v_str.replace('R$', '').replace('r$', '').strip()
-        if ',' in v_str and '.' in v_str:
-            if v_str.rfind(',') > v_str.rfind('.'):
-                v_str = v_str.replace('.', '').replace(',', '.')
-            else:
-                v_str = v_str.replace(',', '')
-        elif ',' in v_str:
-            v_str = v_str.replace(',', '.')
+        if re.match(r'^[\d\.]+(,\d+)?$', v_str):
+            v_str = v_str.replace('.', '').replace(',', '.')
+        elif re.match(r'^[\d\,]+(\.\d+)?$', v_str):
+            v_str = v_str.replace(',', '')
+        else:
+            v_str = v_str.replace('.', '').replace(',', '.')
         return float(v_str)
     except Exception:
         return 0.0
@@ -152,15 +151,22 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         chave_limpa = chave.strip("{}")
         if chave_limpa in CHAVES_RAW or chave in CHAVES_RAW:
             continue
+            
+        if isinstance(valor, str) and re.match(r'^\d{4}-\d{2}-\d{2}$', valor.strip()):
+            partes = valor.strip().split('-')
+            valor = f"{partes[2]}/{partes[1]}/{partes[0]}"
+            
         resultado[chave] = valor
     
     amostra_check = _converter_para_sim(dados_usuario.get("{{AMOSTRA_CHECK}}", "NAO"))
+    resultado["__REMOVER_AMOSTRA__"] = not amostra_check
     if amostra_check:
         resultado["{{AMOSTRA}}"] = dados_usuario.get("{{AMOSTRA_TXT}}", "")
     else:
         resultado["{{AMOSTRA}}"] = ""
 
     vistoria_check = _converter_para_sim(dados_usuario.get("{{VISTORIA_CHECK}}", "NAO"))
+    resultado["__REMOVER_VISTORIA__"] = not vistoria_check
     if vistoria_check:
         resultado["{{VISTORIA}}"] = dados_usuario.get("{{VISTORIA_TXT}}", "")
     else:
@@ -220,7 +226,8 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         else "Não exclusiva para ME/EPP"
     )
 
-    criterio_raw = dados_usuario.get("{{CRITERIOS}}", "ITEM")
+    criterio_raw = dados_usuario.get("{{CRITERIOS}}", dados_usuario.get("{{CRITERIO}}", "ITEM"))
+    resultado["{{CRITERIO}}"] = criterio_raw
     if criterio_raw == "LOTE":
         resultado["{{LOTE}}"] = "Quando a licitação se der por lote, o Pregoeiro convocará o licitante vencedor para readequar, INCLUSIVE e ESPECIALMENTE, os values unitários.\n\tO Pregoeiro estipulará o prazo para readequação de que trata este item, conforme a complexidade do objeto."
     else:
@@ -319,9 +326,9 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         resultado["{{EXCLUSIVO TXT}}"] = "Nos termos do art. 47 e 48 da LCP 123/2006, que versa que a Administração Pública “deverá realizar processo licitatório destinado exclusivamente à participação de microempresas e empresas de pequeno porte nos itens de contratação cujo valor seja de até R$ 80.000,00 (oitenta mil reais)”, e considerando ainda que este tipo de contratação é comumente realizado por empresas de pequeno porte em valores de mercado, hipótese no qual não haverá risco de oportunidade significativos, **esta licitação SERÁ exclusiva para ME/EPP.**"
     else:
         resultado["{{EXCLUSIVO}}"] = "NÃO"
-        resultado["{{EXCLUSIVO TXT}}"] = "Nos termos do art. 47, 48 e 49 da LCP 123/2006, que versa que “o tratamento diferenciado e simplificado para as microempresas e empresas de pequeno porte” pode ser afastado quando “não for vantajoso para a administração pública ou representar prejuízo ao conjunto ou complexo do objeto a ser contratado” e, considerando ainda a justificativa apresentada no bojo do Estudo Técnico Preliminar e no Termo de referência,  **esta licitação NÃO será exclusiva para ME/EPP, sendo concedido, porém, o benefício do empate ficto e demais tratamentos diferenciados para tais empresas.**"
+        resultado["{{EXCLUSIVO TXT}}"] = "Nos termos do art. 47, 48 e 49 da LCP 123/2006, que versa que “o tratamento diferenciado e simplificado para as microempresas e empresas de pequeno porte” pode ser afastado quando “não for vantajoso para a administração pública ou representar prejuízo ao conjunto ou complexo do objeto a ser contratado” e, considerando ainda a justificativa apresentada no bojo do Estudo Técnico Preliminar e no Termo de referência, **esta licitação NÃO será exclusiva para ME/EPP, sendo concedido, porém, o benefício do empate ficto e demais tratamentos diferenciados para tais empresas.**"
 
     return resultado
 
 def filtrar_chaves_docx(dados: dict) -> dict:
-    return {k: v for k, v in dados.items() if (k.startswith("{{") and k.endswith("}}")) or k == "E_ARP"}
+    return {k: v for k, v in dados.items() if (k.startswith("{{") and k.endswith("}}")) or k == "E_ARP" or k.startswith("__")}
