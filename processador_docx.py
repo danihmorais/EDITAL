@@ -6,6 +6,28 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
     doc = Document(caminho_modelo)
     e_arp = dados.get("E_ARP", False)
     
+    if not e_arp:
+        remover_resto = False
+        paragrafos_para_remover = []
+        for p in doc.paragraphs:
+            if "ANEXO VII - MINUTA DA ATA DE REGISTRO DE PREÇOS" in p.text:
+                remover_resto = True
+            if remover_resto:
+                paragrafos_para_remover.append(p)
+        for p in paragrafos_para_remover:
+            p_element = p._element
+            p_element.getparent().remove(p_element)
+            
+        tabelas_para_remover = []
+        remover_resto_tabela = False
+        for body_element in doc.element.body:
+            if body_element.tag.endswith('p'):
+                p_text = "".join(body_element.itertext())
+                if "ANEXO VII - MINUTA DA ATA DE REGISTRO DE PREÇOS" in p_text:
+                    remover_resto_tabela = True
+            elif body_element.tag.endswith('tbl') and remover_resto_tabela:
+                body_element.getparent().remove(body_element)
+
     for paragrafo in doc.paragraphs:
         _processar_paragrafo(paragrafo, dados, e_arp)
                 

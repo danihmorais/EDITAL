@@ -52,13 +52,20 @@ def _formatar_multiplos(valor: str) -> str:
     return str(valor).replace(",", "\n").replace(";", "\n")
 
 def _limpar_valor_numerico(valor) -> float:
+    if isinstance(valor, (int, float)):
+        return float(valor)
     try:
         v_str = str(valor).strip()
         if not v_str:
             return 0.0
-        v_str = v_str.replace('R$', '').strip()
-        if v_str.count(',') == 1 and v_str.count('.') >= 0:
-            v_str = v_str.replace('.', '').replace(',', '.')
+        v_str = v_str.replace('R$', '').replace('r$', '').strip()
+        if ',' in v_str and '.' in v_str:
+            if v_str.rfind(',') > v_str.rfind('.'):
+                v_str = v_str.replace('.', '').replace(',', '.')
+            else:
+                v_str = v_str.replace(',', '')
+        elif ',' in v_str:
+            v_str = v_str.replace(',', '.')
         return float(v_str)
     except Exception:
         return 0.0
@@ -171,7 +178,7 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
 
     arq_mag = _converter_para_sim(dados_usuario.get("{{ARQ_MAG_CHECK}}", "NAO"))
     if arq_mag:
-        resultado["{{ARQ MAG}}"] = "Adicionalmente, o licitante deverá OBRIGATORIAMENTE preencher o arquivo magnético e armazená-lo em um pen-drive próprio, às suas custas, INDEPENDENTEMENTE DE QUANTOS ITENS FOR PARTICIPAR, devendo ele estar acondicionado dentro do envelope “01 – PROPOSTA COMERCIAL” junto com a proposta impressa.\n\tA instrução de acondicionar o pen-drive dentro do envelope vista orientar licitantes que somente enviem suas propostas via Correios. No caso de licitantes credenciados, poderá ser aceito a entrega do arquivo magnético em mãos, fora do envelope.\nO arquivo para preenchimento estará disponível, junto com o tutorial, no site da prefeitura municipal, em link próprio, junto do presente Edital, com o nome “ARQUIVO MAGNÉTICO”.\nCaso haja necessidade, o licitante poderá solicitar o arquivo magnético para preenchimento previamente à sessão pública, junto com o tutorial, no e-mail licitacao@saofrancisco.sp.gov.br.\nQuaisquer dúvidas sobre o funcionamento do arquivo magnético deverão ser dirimidas ANTES da sessão pública por meio do telefone (17) 3693-1101 ou e-mail licitacao@saofrancisco.sp.gov.br."
+        resultado["{{ARQ MAG}}"] = "Adicionalmente, o licitante deverá OBRIGATORIAMNETE preencher o arquivo magnético e armazená-lo em um pen-drive próprio, às suas custas, INDEPENDENTEMENTE DE QUANTOS ITENS FOR PARTICIPAR, devendo ele estar acondicionado dentro do envelope “01 – PROPOSTA COMERCIAL” junto com a proposta impressa.\n\tA instrução de acondicionar o pen-drive dentro do envelope vista orientar licitantes que somente enviem suas propostas via Correios. No caso de licitantes credenciados, poderá ser aceito a entrega do arquivo magnético em mãos, fora do envelope.\nO arquivo para preenchimento estará disponível, junto com o tutorial, no site da prefeitura municipal, em link próprio, junto del presente Edital, com o nome “ARQUIVO MAGNÉTICO”.\nCaso haja necessidade, o licitante poderá solicitar o arquivo magnético para preenchimento previamente à sessão pública, junto com o tutorial, no e-mail licitacao@saofrancisco.sp.gov.br.\nQuaisquer dúvidas sobre o funcionamento do arquivo magnético deverão ser dirimidas ANTES da sessão pública por meio do telefone (17) 3693-1101 ou e-mail licitacao@saofrancisco.sp.gov.br."
         resultado["{{ARQ MAG 2}}"] = "ou operar o arquivo magnético"
         resultado["{{ARQ MAG 3}}"] = "ou arquivo magnético"
     else:
@@ -215,7 +222,7 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
 
     criterio_raw = dados_usuario.get("{{CRITERIOS}}", "ITEM")
     if criterio_raw == "LOTE":
-        resultado["{{LOTE}}"] = "Quando a licitação se der por lote, o Pregoeiro convocará o licitante vencedor para readequar, INCLUSIVE e ESPECIALMENTE, os valores unitários.\n\tO Pregoeiro estipulará o prazo para readequação de que trata este item, conforme a complexidade do objeto."
+        resultado["{{LOTE}}"] = "Quando a licitação se der por lote, o Pregoeiro convocará o licitante vencedor para readequar, INCLUSIVE e ESPECIALMENTE, os values unitários.\n\tO Pregoeiro estipulará o prazo para readequação de que trata este item, conforme a complexidade do objeto."
     else:
         resultado["{{LOTE}}"] = ""
 
@@ -296,6 +303,8 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     resultado["{{VIGENCIA}}"] = vigencia
 
     valor_raw = dados_usuario.get("{{VALOR}}", "")
+    if not valor_raw and "VALOR" in dados_usuario:
+        valor_raw = dados_usuario["VALOR"]
     if valor_raw:
         valor_float = _limpar_valor_numerico(valor_raw)
         resultado["{{VALOR}}"] = _formatar_valor(valor_float)
