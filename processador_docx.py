@@ -104,17 +104,34 @@ def _processar_paragrafo(paragrafo, dados, e_arp):
                 if run.text:
                     run.text = ""
                     apagou_algo = True
-                
+
+    texto_completo = paragrafo.text
+    for chave, valor in dados.items():
+        if chave in ["E_ARP", "__REMOVER_AMOSTRA__", "__REMOVER_VISTORIA__"]:
+            continue
+            
+        marcador = chave if chave.startswith("{{") and chave.endswith("}}") else f"{{{{{chave}}}}}"
+        
+        if marcador in texto_completo:
+            found_in_run = False
+            for run in paragrafo.runs:
+                if marcador in run.text:
+                    if not str(valor).strip() and run.text.strip() == marcador:
+                        apagou_algo = True
+                    run.text = run.text.replace(marcador, str(valor))
+                    found_in_run = True
+            
+            if not found_in_run:
+                texto = paragrafo.text
+                if marcador in texto:
+                    novo_texto = texto.replace(marcador, str(valor))
+                    if paragrafo.runs:
+                        primeiro_run = paragrafo.runs[0]
+                        for run in paragrafo.runs:
+                            run.text = ""
+                        primeiro_run.text = novo_texto
+
     for run in paragrafo.runs:
-        for chave, valor in dados.items():
-            if chave in ["E_ARP", "__REMOVER_AMOSTRA__", "__REMOVER_VISTORIA__"]:
-                continue
-            marcador = chave if chave.startswith("{{") and chave.endswith("}}") else f"{{{{{chave}}}}}"
-            if marcador in run.text:
-                if not str(valor).strip() and run.text.strip() == marcador:
-                    apagou_algo = True
-                run.text = run.text.replace(marcador, str(valor))
-                
         if "**" in run.text:
             run.text = run.text.replace("**", "")
             run.font.bold = True

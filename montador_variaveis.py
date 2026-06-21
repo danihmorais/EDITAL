@@ -28,6 +28,20 @@ def _formatar_lista_assinaturas(nomes_str: str, cargos_str: str):
         resultado.append(f"{nome} ({cargo})" if cargo else nome)
     return resultado
 
+def _formatar_nomes_com_sufixo(nomes_str: str, cargos_str: str, sufixo: str) -> str:
+    if not nomes_str or nomes_str == "[Não informado]":
+        return "[Não informado]" if nomes_str == "[Não informado]" else ""
+    nomes = [n.strip() for n in nomes_str.split(",") if n.strip()]
+    cargos = [c.strip() for c in cargos_str.split(",") if c.strip()]
+    resultado = []
+    for i, nome in enumerate(nomes):
+        cargo = cargos[i] if i < len(cargos) else ""
+        if cargo:
+            resultado.append(f"{nome} ({cargo}) - {sufixo}")
+        else:
+            resultado.append(f"{nome} - {sufixo}")
+    return "\n".join(resultado)
+
 def _formatar_hora_min(hora_str: str) -> str:
     if not hora_str:
         return ""
@@ -56,15 +70,16 @@ def _limpar_valor_numerico(valor) -> float:
     if isinstance(valor, (int, float)):
         return float(valor)
     try:
-        v_str = str(valor).upper().replace('R$', '').strip()
+        v_str = str(valor).upper().replace('R$', '').replace(' ', '').strip()
         if not v_str:
             return 0.0
-        if re.match(r'^[\d\.]+(,\d+)?$', v_str):
-            v_str = v_str.replace('.', '').replace(',', '.')
-        elif re.match(r'^[\d\,]+(\.\d+)?$', v_str):
-            v_str = v_str.replace(',', '')
-        else:
-            v_str = v_str.replace('.', '').replace(',', '.')
+        if ',' in v_str and '.' in v_str:
+            if v_str.rfind(',') > v_str.rfind('.'):
+                v_str = v_str.replace('.', '').replace(',', '.')
+            else:
+                v_str = v_str.replace(',', '')
+        elif ',' in v_str:
+            v_str = v_str.replace(',', '.')
         return float(v_str)
     except Exception:
         return 0.0
@@ -226,11 +241,18 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         else "Não exclusiva para ME/EPP"
     )
 
-    criterio_raw = dados_usuario.get("{{CRITERIOS}}", dados_usuario.get("{{CRITERIO}}", "ITEM"))
-    resultado["{{CRITERIO}}"] = criterio_raw
-    if criterio_raw == "LOTE":
+    criterio_raw = str(dados_usuario.get("{{CRITERIOS}}", dados_usuario.get("{{CRITERIO}}", "ITEM"))).strip().upper()
+    if criterio_raw == "ITEM":
+        resultado["{{CRITERIO}}"] = "POR ITEM"
+        resultado["{{LOTE}}"] = ""
+    elif criterio_raw == "LOTE":
+        resultado["{{CRITERIO}}"] = "POR LOTE"
         resultado["{{LOTE}}"] = "Quando a licitação se der por lote, o Pregoeiro convocará o licitante vencedor para readequar, INCLUSIVE e ESPECIALMENTE, os values unitários.\n\tO Pregoeiro estipulará o prazo para readequação de que trata este item, conforme a complexidade do objeto."
+    elif criterio_raw == "GLOBAL":
+        resultado["{{CRITERIO}}"] = "GLOBAL"
+        resultado["{{LOTE}}"] = ""
     else:
+        resultado["{{CRITERIO}}"] = criterio_raw
         resultado["{{LOTE}}"] = ""
 
     gestores_str = dados_usuario.get("{{GESTOR}}", "")
@@ -238,8 +260,8 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     fiscais_str = dados_usuario.get("{{FISCAL}}", "")
     cargos_fiscais_str = dados_usuario.get("{{FISCAL_CARGO}}", "")
 
-    resultado["{{GESTOR}}"] = _formatar_multiplos(gestores_str)
-    resultado["{{FISCAL}}"] = _formatar_multiplos(fiscais_str)
+    resultado["{{GESTOR}}"] = _formatar_nomes_com_sufixo(gestores_str, cargos_gestores_str, "Gestor")
+    resultado["{{FISCAL}}"] = _formatar_nomes_com_sufixo(fiscais_str, cargos_fiscais_str, "Fiscal")
 
     blocos_ges_fis = []
     blocos_ges_ass = []
@@ -309,13 +331,15 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     vigencia = dados_usuario.get("{{VIGENCIA}}", "")
     resultado["{{VIGENCIA}}"] = vigencia
 
-    valor_raw = dados_usuario.get("{{VALOR}}", "")
-    if not valor_raw and "VALOR" in dados_usuario:
-        valor_raw = dados_usuario["VALOR"]
+    valor_raw = dados_usuario.get("{{VALOR}}", dados_usuario.get("VALOR", ""))
     if valor_raw:
         valor_float = _limpar_valor_numerico(valor_raw)
-        resultado["{{VALOR}}"] = _formatar_valor(valor_float)
-        resultado["{{VALOR EXT}}"] = _valor_por_extenso(valor_float)
+        if valor_float > 0:
+            resultado["{{VALOR}}"] = _formatar_valor(valor_float)
+            resultado["{{VALOR EXT}}"] = _valor_por_extenso(valor_float)
+        else:
+            resultado["{{VALOR}}"] = str(valor_raw)
+            resultado["{{VALOR EXT}}"] = ""
     else:
         resultado["{{VALOR}}"] = ""
         resultado["{{VALOR EXT}}"] = ""
