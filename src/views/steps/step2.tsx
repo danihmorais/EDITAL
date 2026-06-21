@@ -258,6 +258,16 @@ export default function Step2({ dados, atualizarDados }: any) {
         />
       </div>
 
+      <div>
+        <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Local e Prazo de Execução / Entrega</label>
+        <textarea
+          value={dados.execucao || ""}
+          onChange={(e) => atualizarDados({ execucao: e.target.value })}
+          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "120px" }}
+          placeholder="Descreva as condições, prazos e locais de execução ou entrega (pode usar quebras de linha para separar os itens)..."
+        />
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <input

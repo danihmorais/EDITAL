@@ -1,6 +1,7 @@
 from docx import Document
 from docx.enum.text import WD_COLOR_INDEX
 import os
+import re
 
 def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) -> str:
     doc = Document(caminho_modelo)
@@ -10,36 +11,53 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
     remover_vistoria = dados.get("__REMOVER_VISTORIA__", False)
     
     if not e_arp:
-        remover_resto = False
-        paragrafos_para_remover = []
-        for p in doc.paragraphs:
-            if "ANEXO VII - MINUTA DA ATA DE REGISTRO DE PREÇOS" in p.text:
-                remover_resto = True
-            if remover_resto:
-                paragrafos_para_remover.append(p)
-        for p in paragrafos_para_remover:
-            p_element = p._element
-            p_element.getparent().remove(p_element)
-            
-        tabelas_para_remover = []
-        remover_resto_tabela = False
-        for body_element in doc.element.body:
-            if body_element.tag.endswith('p'):
-                p_text = "".join(body_element.itertext())
-                if "ANEXO VII - MINUTA DA ATA DE REGISTRO DE PREÇOS" in p_text:
-                    remover_resto_tabela = True
-            elif body_element.tag.endswith('tbl') and remover_resto_tabela:
-                body_element.getparent().remove(body_element)
+        body = doc.element.body
+        remover = False
+        elementos_para_remover = []
+        for child in body:
+            if child.tag.endswith('p'):
+                texto = "".join(child.itertext()).strip().upper()
+                if "MINUTA DA ATA DE REGISTRO DE PREÇOS" in texto:
+                    remover = True
+            if remover:
+                elementos_para_remover.append(child)
+        
+        for el in elementos_para_remover:
+            try:
+                el.getparent().remove(el)
+            except Exception:
+                pass
 
-    paragrafos_titulos_remover = []
-    for p in doc.paragraphs:
+    paragrafos_remover_set = set()
+    for i, p in enumerate(doc.paragraphs):
         texto_upper = p.text.strip().upper()
-        if remover_amostra and "AMOSTRA" in texto_upper and len(texto_upper) < 60:
-            paragrafos_titulos_remover.append(p)
-        if remover_vistoria and "VISTORIA" in texto_upper and len(texto_upper) < 60:
-            paragrafos_titulos_remover.append(p)
+        
+        is_amostra = remover_amostra and "AMOSTRA" in texto_upper and len(texto_upper) < 60
+        is_vistoria = remover_vistoria and "VISTORIA" in texto_upper and len(texto_upper) < 60
+        
+        if is_amostra or is_vistoria:
+            paragrafos_remover_set.add(p)
             
-    for p in paragrafos_titulos_remover:
+            idx = i + 1
+            while idx < len(doc.paragraphs):
+                next_p = doc.paragraphs[idx]
+                txt = next_p.text.strip()
+                if not txt or (remover_amostra and "{{AMOSTRA}}" in txt) or (remover_vistoria and "{{VISTORIA}}" in txt):
+                    paragrafos_remover_set.add(next_p)
+                    idx += 1
+                else:
+                    break
+                    
+            idx = i - 1
+            while idx >= 0:
+                prev_p = doc.paragraphs[idx]
+                if not prev_p.text.strip():
+                    paragrafos_remover_set.add(prev_p)
+                    idx -= 1
+                else:
+                    break
+
+    for p in paragrafos_remover_set:
         try:
             p._element.getparent().remove(p._element)
         except Exception:
@@ -131,12 +149,35 @@ def _processar_paragrafo(paragrafo, dados, e_arp):
                             run.text = ""
                         primeiro_run.text = novo_texto
 
-    for run in paragrafo.runs:
-        if "**" in run.text:
-            run.text = run.text.replace("**", "")
-            run.font.bold = True
-            run.font.italic = True
-            run.font.underline = True
+    texto_p = paragrafo.text
+    if "***" in texto_p or "**" in texto_p:
+        parts = re.split(r'(\*\*\*.*?\*\*\*|\*\*.*?\*\*)', texto_p)
+        if len(parts) > 1:
+            p_font_name = None
+            p_font_size = None
+            if paragrafo.runs:
+                p_font_name = paragrafo.runs[0].font.name
+                p_font_size = paragrafo.runs[0].font.size
+                
+            for r in paragrafo.runs:
+                r.text = ""
+                
+            for part in parts:
+                if not part: continue
+                run_new = paragrafo.add_run()
+                if p_font_name: run_new.font.name = p_font_name
+                if p_font_size: run_new.font.size = p_font_size
+                
+                if part.startswith('***') and part.endswith('***'):
+                    run_new.text = part[3:-3]
+                    run_new.font.bold = True
+                    run_new.font.italic = True
+                    run_new.font.underline = True
+                elif part.startswith('**') and part.endswith('**'):
+                    run_new.text = part[2:-2]
+                    run_new.font.bold = True
+                else:
+                    run_new.text = part
 
     if apagou_algo and not paragrafo.text.strip():
         try:

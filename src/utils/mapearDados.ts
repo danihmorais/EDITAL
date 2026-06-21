@@ -1,5 +1,3 @@
-// src/utils/mapearDados.ts
-
 function numeroPorExtenso(numero: number): string {
   if (isNaN(numero)) return "";
   if (numero === 0) return "zero";
@@ -99,6 +97,9 @@ export const mapearDadosWizard = (dados: any) => {
         "{{MODALIDADE}}": dados.modalidade || "PREGAO_ELETRONICO",
         "{{MODALIDADE_NOME}}": modalidadeFormatada,
         "{{DECL.ADICIONAIS}}": dados.declAdicionais || "",
+        "{{CONTRATANTE}}": dados.contratante || "",
+        "{{CONTRATADA}}": dados.contratada || "",
+        "{{EXECUCAO}}": dados.execucao || "",
         "{{VIGENCIA}}": dados.vigencia || "",
         "{{DOTACAO}}": dados.dotacao || "",
         "{{TIPO_OBJETO}}": dados.tipoObjeto || "AQUISICAO",

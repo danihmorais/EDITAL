@@ -70,7 +70,8 @@ def _limpar_valor_numerico(valor) -> float:
     if isinstance(valor, (int, float)):
         return float(valor)
     try:
-        v_str = str(valor).upper().replace('R$', '').replace(' ', '').strip()
+        v_str = str(valor).upper().strip()
+        v_str = re.sub(r'[^\d.,-]', '', v_str)
         if not v_str:
             return 0.0
         if ',' in v_str and '.' in v_str:
@@ -158,6 +159,23 @@ def _valor_por_extenso(valor: float) -> str:
             return str_centavos
     except Exception:
         return ""
+
+def _data_por_extenso(data_str: str) -> str:
+    meses = ["", "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+    if not data_str:
+        return ""
+    try:
+        if '-' in data_str:
+            partes = data_str.split('-')
+            dia, mes, ano = int(partes[2]), int(partes[1]), int(partes[0])
+        elif '/' in data_str:
+            partes = data_str.split('/')
+            dia, mes, ano = int(partes[0]), int(partes[1]), int(partes[2])
+        else:
+            return data_str
+        return f"{dia:02d} de {meses[mes]} de {ano}"
+    except Exception:
+        return data_str
 
 def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     resultado = {}
@@ -330,6 +348,16 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
 
     vigencia = dados_usuario.get("{{VIGENCIA}}", "")
     resultado["{{VIGENCIA}}"] = vigencia
+
+    execucao = resultado.get("{{EXECUCAO}}", resultado.get("EXECUCAO", ""))
+    if execucao:
+        resultado["{{EXECUCAO}}"] = "\n".join([x.strip() for x in str(execucao).split("\n") if x.strip()])
+    else:
+        resultado["{{EXECUCAO}}"] = ""
+
+    data_edital = resultado.get("{{DATA DO EDITAL}}", resultado.get("DATA DO EDITAL", ""))
+    if data_edital:
+        resultado["{{DATA DO EDITAL}}"] = _data_por_extenso(data_edital)
 
     valor_raw = dados_usuario.get("{{VALOR}}", dados_usuario.get("VALOR", ""))
     if valor_raw:
