@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "identifier": "com.danihmorais.montaedital",
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run build-backend && npm run dev",
+    "beforeBuildCommand": "npm run build-backend && npm run build",
     "devUrl": "http://localhost:1420",
     "frontendDist": "../dist"
   },
