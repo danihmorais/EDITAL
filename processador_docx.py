@@ -9,24 +9,6 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
     
     remover_amostra = dados.get("__REMOVER_AMOSTRA__", False)
     remover_vistoria = dados.get("__REMOVER_VISTORIA__", False)
-    
-    if not e_arp:
-        body = doc.element.body
-        remover = False
-        elementos_para_remover = []
-        for child in body:
-            if child.tag.endswith('p'):
-                texto = "".join(child.itertext()).strip().upper()
-                if "MINUTA DA ATA DE REGISTRO DE PREÇOS" in texto:
-                    remover = True
-            if remover:
-                elementos_para_remover.append(child)
-        
-        for el in elementos_para_remover:
-            try:
-                el.getparent().remove(el)
-            except Exception:
-                pass
 
     paragrafos_remover_set = set()
     for i, p in enumerate(doc.paragraphs):
@@ -109,6 +91,24 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                         for celula in linha.cells:
                             for paragrafo in celula.paragraphs:
                                 _processar_paragrafo(paragrafo, dados, e_arp)
+
+    if not e_arp:
+        body = doc.element.body
+        remover = False
+        elementos_para_remover = []
+        for child in body:
+            if child.tag.endswith('p'):
+                texto = "".join(child.itertext()).strip().upper()
+                if "MINUTA DA ATA DE REGISTRO DE PREÇOS" in texto:
+                    remover = True
+            if remover:
+                elementos_para_remover.append(child)
+        
+        for el in elementos_para_remover:
+            try:
+                el.getparent().remove(el)
+            except Exception:
+                pass
 
     doc.save(caminho_saida)
     return caminho_saida
