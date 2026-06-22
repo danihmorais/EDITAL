@@ -19,6 +19,11 @@ export default function Step3({ dados, atualizarDados }: any) {
   const numVigencia = vigenciaArr.length > 0 && !isNaN(Number(vigenciaArr[0])) ? vigenciaArr[0] : "";
   const unitVigencia = vigenciaArr.length > 1 ? vigenciaArr[1] : "meses";
 
+  // Tratamento para garantir que as declarações adicionais funcionam como lista, mesmo que o dado legado seja string
+  const declAdicionaisArray = Array.isArray(dados.declAdicionais) 
+    ? dados.declAdicionais 
+    : (typeof dados.declAdicionais === 'string' && dados.declAdicionais.trim() !== '' ? [dados.declAdicionais] : []);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
@@ -182,14 +187,44 @@ export default function Step3({ dados, atualizarDados }: any) {
         </div>
       </div>
 
-      <div>
-        <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Declarações Adicionais</label>
-        <textarea
-          value={dados.declAdicionais || ""}
-          onChange={(e) => atualizarDados({ declAdicionais: e.target.value })}
-          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "120px" }}
-          placeholder="Insira outras declarações necessárias (pode colar com quebras de linha)..."
-        />
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+        <h3 style={{ margin: "0 0 4px 0", color: "var(--text-main)", fontSize: "16px", fontWeight: "bold" }}>Declarações Adicionais</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {declAdicionaisArray.map((decl: string, index: number) => (
+            <div key={index} style={{ display: "flex", gap: "8px" }}>
+              <textarea
+                value={decl}
+                onChange={(e) => {
+                  const novasDecls = [...declAdicionaisArray];
+                  novasDecls[index] = e.target.value;
+                  atualizarDados({ declAdicionais: novasDecls });
+                }}
+                style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "60px", resize: "vertical" }}
+                placeholder="Insira a declaração adicional..."
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const novasDecls = declAdicionaisArray.filter((_: any, i: number) => i !== index);
+                  atualizarDados({ declAdicionais: novasDecls });
+                }}
+                style={{ padding: "0 15px", background: "transparent", color: "var(--btn-danger)", border: "1px solid var(--btn-danger)", borderRadius: "8px", cursor: "pointer" }}
+              >
+                Remover
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              const novasDecls = [...declAdicionaisArray, ""];
+              atualizarDados({ declAdicionais: novasDecls });
+            }}
+            style={{ padding: "10px", background: "transparent", border: "1.5px dashed var(--btn-primary)", color: "var(--btn-primary)", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", marginTop: "8px" }}
+          >
+            + Adicionar Declaração
+          </button>
+        </div>
       </div>
 
       <div>

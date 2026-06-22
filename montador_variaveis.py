@@ -300,7 +300,7 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
             blocos_ges_fis.append(bloco)
             blocos_fis_ass.append(f"_____________________________\n{nome}\nFISCAL\n ")
 
-    resultado["{{GES.FIS.ANEXOS}}"] = "\n\n".join(blocos_ges_fis) if blocos_ges_fis else ""
+    resultado["{{GES.FIS.ANEXOS}}"] = "\n".join(blocos_ges_fis) if blocos_ges_fis else ""
     resultado["{{GES.ASS}}"] = "\n".join(blocos_ges_ass) if blocos_ges_ass else ""
     resultado["{{FIS.ASS}}"] = "\n".join(blocos_fis_ass) if blocos_fis_ass else ""
 
