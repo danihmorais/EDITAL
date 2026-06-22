@@ -1,5 +1,8 @@
 from docx import Document
 from docx.enum.text import WD_COLOR_INDEX
+from docx.oxml import OxmlElement
+from docx.text.paragraph import Paragraph
+import copy
 import os
 import re
 
@@ -45,7 +48,7 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
         except Exception:
             pass
 
-    for paragrafo in doc.paragraphs:
+    for paragrafo in list(doc.paragraphs):
         _processar_paragrafo(paragrafo, dados, e_arp)
                 
     for tabela in doc.tables:
@@ -69,27 +72,27 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                     
         for linha in tabela.rows:
             for celula in linha.cells:
-                for paragrafo in celula.paragraphs:
+                for paragrafo in list(celula.paragraphs):
                     _processar_paragrafo(paragrafo, dados, e_arp)
                     
     for section in doc.sections:
         for header in [section.header, section.first_page_header, section.even_page_header]:
             if header:
-                for paragrafo in header.paragraphs:
+                for paragrafo in list(header.paragraphs):
                     _processar_paragrafo(paragrafo, dados, e_arp)
                 for tabela in header.tables:
                     for linha in tabela.rows:
                         for celula in linha.cells:
-                            for paragrafo in celula.paragraphs:
+                            for paragrafo in list(celula.paragraphs):
                                 _processar_paragrafo(paragrafo, dados, e_arp)
         for footer in [section.footer, section.first_page_footer, section.even_page_footer]:
             if footer:
-                for paragrafo in footer.paragraphs:
+                for paragrafo in list(footer.paragraphs):
                     _processar_paragrafo(paragrafo, dados, e_arp)
                 for tabela in footer.tables:
                     for linha in tabela.rows:
                         for celula in linha.cells:
-                            for paragrafo in celula.paragraphs:
+                            for paragrafo in list(celula.paragraphs):
                                 _processar_paragrafo(paragrafo, dados, e_arp)
 
     if not e_arp:
@@ -113,6 +116,25 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
     doc.save(caminho_saida)
     return caminho_saida
 
+def _inserir_multilinhas(paragrafo, valor_str, primeira_substituicao_callback):
+    linhas = str(valor_str).split('\n')
+    primeira_substituicao_callback(linhas[0])
+    
+    paragrafo_atual = paragrafo
+    for linha in linhas[1:]:
+        if not linha.strip():
+            continue
+            
+        novo_p = OxmlElement("w:p")
+        paragrafo_atual._p.addnext(novo_p)
+        
+        if paragrafo_atual._p.pPr is not None:
+            novo_p.append(copy.deepcopy(paragrafo_atual._p.pPr))
+            
+        novo_paragrafo_obj = Paragraph(novo_p, paragrafo_atual._parent)
+        novo_paragrafo_obj.add_run(linha)
+        paragrafo_atual = novo_paragrafo_obj
+
 def _processar_paragrafo(paragrafo, dados, e_arp):
     apagou_algo = False
     
@@ -129,25 +151,39 @@ def _processar_paragrafo(paragrafo, dados, e_arp):
             continue
             
         marcador = chave if chave.startswith("{{") and chave.endswith("}}") else f"{{{{{chave}}}}}"
+        valor_str = str(valor)
         
         if marcador in texto_completo:
             found_in_run = False
             for run in paragrafo.runs:
                 if marcador in run.text:
-                    if not str(valor).strip() and run.text.strip() == marcador:
+                    if not valor_str.strip() and run.text.strip() == marcador:
                         apagou_algo = True
-                    run.text = run.text.replace(marcador, str(valor))
+                    
+                    if '\n' in valor_str:
+                        def set_primeira_linha(texto):
+                            run.text = run.text.replace(marcador, texto)
+                        _inserir_multilinhas(paragrafo, valor_str, set_primeira_linha)
+                    else:
+                        run.text = run.text.replace(marcador, valor_str)
+                        
                     found_in_run = True
             
             if not found_in_run:
                 texto = paragrafo.text
                 if marcador in texto:
-                    novo_texto = texto.replace(marcador, str(valor))
+                    novo_texto = texto.replace(marcador, valor_str)
                     if paragrafo.runs:
                         primeiro_run = paragrafo.runs[0]
                         for run in paragrafo.runs:
                             run.text = ""
-                        primeiro_run.text = novo_texto
+                        
+                        if '\n' in novo_texto:
+                            def set_primeira_linha_fallback(texto_linha):
+                                primeiro_run.text = texto_linha
+                            _inserir_multilinhas(paragrafo, novo_texto, set_primeira_linha_fallback)
+                        else:
+                            primeiro_run.text = novo_texto
 
     texto_p = paragrafo.text
     if "***" in texto_p or "**" in texto_p:
