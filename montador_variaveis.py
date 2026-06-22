@@ -61,17 +61,6 @@ def _subtrair_15_min(hora_str: str) -> str:
     except Exception:
         return hora_str
 
-def _formatar_multiplos(valor: str) -> str:
-    if not valor:
-        return ""
-    return str(valor).replace(",", "\n").replace(";", "\n")
-
-def _numerar_linhas(texto: str) -> str:
-    if not texto:
-        return ""
-    linhas = [x.strip() for x in str(texto).split("\n") if x.strip()]
-    return "\n".join(f"{i+1}. {linha}" for i, linha in enumerate(linhas))
-
 def _limpar_valor_numerico(valor) -> float:
     if isinstance(valor, (int, float)):
         return float(valor)
@@ -296,7 +285,7 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         cargos_g = [c.strip() for c in cargos_gestores_str.split(",") if c.strip()]
         for i, nome in enumerate(nomes_g):
             cargo = cargos_g[i] if i < len(cargos_g) else ""
-            bloco = f"**GESTOR:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n**Assinatura:** ______________________________________________________"
+            bloco = f"**GESTOR:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n**Assinatura: ______________________________________________________**"
             blocos_ges_fis.append(bloco)
             blocos_ges_ass.append(f"_____________________________\n{nome}\nGESTOR\n ")
 
@@ -307,7 +296,7 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         cargos_f = [c.strip() for c in cargos_fiscais_str.split(",") if c.strip()]
         for i, nome in enumerate(nomes_f):
             cargo = cargos_f[i] if i < len(cargos_f) else ""
-            bloco = f"**FISCAL:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n**Assinatura:** ______________________________________________________"
+            bloco = f"**FISCAL:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n**Assinatura: ______________________________________________________**"
             blocos_ges_fis.append(bloco)
             blocos_fis_ass.append(f"_____________________________\n{nome}\nFISCAL\n ")
 
@@ -336,19 +325,19 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
             resultado["{{HORA INICIO CRED}}"] = ""
 
     decl_adicionais = dados_usuario.get("{{DECL.ADICIONAIS}}", "")
-    resultado["{{DECL.ADICIONAIS}}"] = _numerar_linhas(decl_adicionais)
+    resultado["{{DECL.ADICIONAIS}}"] = decl_adicionais
 
     contratante_str = dados_usuario.get("{{CONTRATANTE}}", "")
-    resultado["{{CONTRATANTE}}"] = _numerar_linhas(contratante_str)
+    resultado["{{CONTRATANTE}}"] = contratante_str
 
     contratada_str = dados_usuario.get("{{CONTRATADA}}", "")
-    resultado["{{CONTRATADA}}"] = _numerar_linhas(contratada_str)
+    resultado["{{CONTRATADA}}"] = contratada_str
 
     vigencia = dados_usuario.get("{{VIGENCIA}}", "")
     resultado["{{VIGENCIA}}"] = vigencia
 
     execucao = resultado.get("{{EXECUCAO}}", resultado.get("EXECUCAO", ""))
-    resultado["{{EXECUCAO}}"] = _numerar_linhas(execucao)
+    resultado["{{EXECUCAO}}"] = execucao
 
     data_edital = resultado.get("{{DATA DO EDITAL}}", resultado.get("DATA DO EDITAL", ""))
     if data_edital:
