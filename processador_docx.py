@@ -116,6 +116,37 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
     doc.save(caminho_saida)
     return caminho_saida
 
+def _aplicar_formatacao_markdown(paragrafo):
+    texto_p = paragrafo.text
+    if "***" in texto_p or "**" in texto_p:
+        parts = re.split(r'(\*\*\*.*?\*\*\*|\*\*.*?\*\*)', texto_p)
+        if len(parts) > 1:
+            p_font_name = None
+            p_font_size = None
+            if paragrafo.runs:
+                p_font_name = paragrafo.runs[0].font.name
+                p_font_size = paragrafo.runs[0].font.size
+                
+            for r in paragrafo.runs:
+                r.text = ""
+                
+            for part in parts:
+                if not part: continue
+                run_new = paragrafo.add_run()
+                if p_font_name: run_new.font.name = p_font_name
+                if p_font_size: run_new.font.size = p_font_size
+                
+                if part.startswith('***') and part.endswith('***'):
+                    run_new.text = part[3:-3]
+                    run_new.font.bold = True
+                    run_new.font.italic = True
+                    run_new.font.underline = True
+                elif part.startswith('**') and part.endswith('**'):
+                    run_new.text = part[2:-2]
+                    run_new.font.bold = True
+                else:
+                    run_new.text = part
+
 def _inserir_multilinhas(paragrafo, valor_str, primeira_substituicao_callback):
     linhas = str(valor_str).split('\n')
     primeira_substituicao_callback(linhas[0])
@@ -133,17 +164,22 @@ def _inserir_multilinhas(paragrafo, valor_str, primeira_substituicao_callback):
             
         novo_paragrafo_obj = Paragraph(novo_p, paragrafo_atual._parent)
         novo_paragrafo_obj.add_run(linha)
+        
+        _aplicar_formatacao_markdown(novo_paragrafo_obj)
+        
         paragrafo_atual = novo_paragrafo_obj
 
 def _processar_paragrafo(paragrafo, dados, e_arp):
     apagou_algo = False
     
-    if not e_arp:
-        for run in paragrafo.runs:
-            if run.font.highlight_color in [WD_COLOR_INDEX.BRIGHT_GREEN, WD_COLOR_INDEX.GREEN]:
+    for run in paragrafo.runs:
+        if run.font.highlight_color in [WD_COLOR_INDEX.BRIGHT_GREEN, WD_COLOR_INDEX.GREEN]:
+            if not e_arp:
                 if run.text:
                     run.text = ""
                     apagou_algo = True
+            else:
+                run.font.highlight_color = None
 
     texto_completo = paragrafo.text
     for chave, valor in dados.items():
@@ -185,35 +221,7 @@ def _processar_paragrafo(paragrafo, dados, e_arp):
                         else:
                             primeiro_run.text = novo_texto
 
-    texto_p = paragrafo.text
-    if "***" in texto_p or "**" in texto_p:
-        parts = re.split(r'(\*\*\*.*?\*\*\*|\*\*.*?\*\*)', texto_p)
-        if len(parts) > 1:
-            p_font_name = None
-            p_font_size = None
-            if paragrafo.runs:
-                p_font_name = paragrafo.runs[0].font.name
-                p_font_size = paragrafo.runs[0].font.size
-                
-            for r in paragrafo.runs:
-                r.text = ""
-                
-            for part in parts:
-                if not part: continue
-                run_new = paragrafo.add_run()
-                if p_font_name: run_new.font.name = p_font_name
-                if p_font_size: run_new.font.size = p_font_size
-                
-                if part.startswith('***') and part.endswith('***'):
-                    run_new.text = part[3:-3]
-                    run_new.font.bold = True
-                    run_new.font.italic = True
-                    run_new.font.underline = True
-                elif part.startswith('**') and part.endswith('**'):
-                    run_new.text = part[2:-2]
-                    run_new.font.bold = True
-                else:
-                    run_new.text = part
+    _aplicar_formatacao_markdown(paragrafo)
 
     if apagou_algo and not paragrafo.text.strip():
         try:

@@ -64,7 +64,7 @@ export const mapearDadosWizard = (dados: any) => {
   const docs = dados.documentosAdicionais || [];
   for (const doc of docs) {
     if (doc.trim()) {
-      docText += `***(DOCUMENTO ${docCount.toString().padStart(2, '0')})*** ${doc.trim()}\n`;
+      docText += `***(Documento ${docCount.toString().padStart(2, '0')})*** ${doc.trim()}\n`;
       docCount++;
     }
   }
