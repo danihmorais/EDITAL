@@ -54,6 +54,20 @@ export default function Step1({ dados, atualizarDados }: any) {
         </div>
       </div>
 
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Instrumento</label>
+          <select
+            value={dados.instrumento || "CONTRATO"}
+            onChange={(e) => atualizarDados({ instrumento: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+          >
+            <option value="CONTRATO">Contrato Regular</option>
+            <option value="ATA">Ata de Registro de Preços</option>
+          </select>
+        </div>
+      </div>
+
       {dados.modalidade === "PREGAO_PRESENCIAL" && (
         <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)" }}>
           <input

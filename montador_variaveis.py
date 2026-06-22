@@ -66,6 +66,12 @@ def _formatar_multiplos(valor: str) -> str:
         return ""
     return str(valor).replace(",", "\n").replace(";", "\n")
 
+def _numerar_linhas(texto: str) -> str:
+    if not texto:
+        return ""
+    linhas = [x.strip() for x in str(texto).split("\n") if x.strip()]
+    return "\n".join(f"{i+1}. {linha}" for i, linha in enumerate(linhas))
+
 def _limpar_valor_numerico(valor) -> float:
     if isinstance(valor, (int, float)):
         return float(valor)
@@ -230,25 +236,26 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
 
     modalidade_raw = dados_usuario.get("{{MODALIDADE}}", "PREGAO_ELETRONICO")
 
-    prorroga = dados_usuario.get("{{PRORROGA}}", "NÃO")
-    
-    if instrumento_raw == "ATA":
-        if _converter_para_sim(prorroga):
-            texto_prorroga = "podendo ser prorrogado por igual período, nos termos do art. 84 da Lei Federal nº 14.133/2021"
-            texto_prorroga_sn = "Sim"
-        else:
-            texto_prorroga = "e será improrrogável"
-            texto_prorroga_sn = "Não"
+    prorroga_check = dados_usuario.get("{{PRORROGACAO_CHECK}}", "NAO")
+    sim_prorroga = _converter_para_sim(prorroga_check)
+
+    if not sim_prorroga:
+        texto_prorrogacao = "será improrrogável"
+        texto_prorrogacao2 = "será improrrogável"
+        texto_prorroga_sn = "Não"
     else:
-        if _converter_para_sim(prorroga):
-            texto_prorroga = "podendo ser prorrogado por igual período, nos termos dos arts. 106 e 107 da Lei Federal nº 14.133/2021, e art. 68 do Decreto Municipal nº 2056/24"
-            texto_prorroga_sn = "Sim"
+        texto_prorroga_sn = "Sim"
+        if instrumento_raw == "ATA":
+            texto_prorrogacao = "podendo ser prorrogado por igual período, nos termos do art. 84 da Lei Federal nº 14.133/2021"
+            texto_prorrogacao2 = texto_prorrogacao
         else:
-            texto_prorroga = "e será improrrogável"
-            texto_prorroga_sn = "Não"
-        
+            texto_prorrogacao = "podendo ser prorrogado por igual período, nos termos dos arts. 106 e 107 da Lei Federal nº 14.133/2021, e art. 68 do Decreto Municipal nº 2056/24"
+            texto_prorrogacao2 = "podendo ser prorrogado por igual período, nos termos do art. 84 da Lei Federal nº 14.133/2021"
+
     resultado["{{PRORROGA_CLAUS}}"] = ""
-    resultado["{{PRORROGA}}"] = texto_prorroga
+    resultado["{{PRORROGA}}"] = texto_prorrogacao
+    resultado["{{PRORROGACAO}}"] = texto_prorrogacao
+    resultado["{{PRORROGACAO2}}"] = texto_prorrogacao2
     resultado["{{PRORROGA_SN}}"] = texto_prorroga_sn
 
     meepp = dados_usuario.get("{{ME_EPP}}", "NAO")
@@ -329,31 +336,19 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
             resultado["{{HORA INICIO CRED}}"] = ""
 
     decl_adicionais = dados_usuario.get("{{DECL.ADICIONAIS}}", "")
-    if decl_adicionais:
-        resultado["{{DECL.ADICIONAIS}}"] = "\n".join([d.strip() for d in decl_adicionais.split("\n") if d.strip()])
-    else:
-        resultado["{{DECL.ADICIONAIS}}"] = ""
+    resultado["{{DECL.ADICIONAIS}}"] = _numerar_linhas(decl_adicionais)
 
     contratante_str = dados_usuario.get("{{CONTRATANTE}}", "")
-    if contratante_str:
-        resultado["{{CONTRATANTE}}"] = "\n".join([c.strip() for c in contratante_str.split("\n") if c.strip()])
-    else:
-        resultado["{{CONTRATANTE}}"] = ""
+    resultado["{{CONTRATANTE}}"] = _numerar_linhas(contratante_str)
 
     contratada_str = dados_usuario.get("{{CONTRATADA}}", "")
-    if contratada_str:
-        resultado["{{CONTRATADA}}"] = "\n".join([c.strip() for c in contratada_str.split("\n") if c.strip()])
-    else:
-        resultado["{{CONTRATADA}}"] = ""
+    resultado["{{CONTRATADA}}"] = _numerar_linhas(contratada_str)
 
     vigencia = dados_usuario.get("{{VIGENCIA}}", "")
     resultado["{{VIGENCIA}}"] = vigencia
 
     execucao = resultado.get("{{EXECUCAO}}", resultado.get("EXECUCAO", ""))
-    if execucao:
-        resultado["{{EXECUCAO}}"] = "\n".join([x.strip() for x in str(execucao).split("\n") if x.strip()])
-    else:
-        resultado["{{EXECUCAO}}"] = ""
+    resultado["{{EXECUCAO}}"] = _numerar_linhas(execucao)
 
     data_edital = resultado.get("{{DATA DO EDITAL}}", resultado.get("DATA DO EDITAL", ""))
     if data_edital:

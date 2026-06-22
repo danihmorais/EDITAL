@@ -55,12 +55,23 @@ export default function Step3({ dados, atualizarDados }: any) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
         <div>
           <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Exclusivo para ME/EPP</label>
           <select
             value={dados.exclusivo || "NAO"}
             onChange={(e) => atualizarDados({ exclusivo: e.target.value })}
+            style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+          >
+            <option value="NAO">Não</option>
+            <option value="SIM">Sim</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Permitir Prorrogação?</label>
+          <select
+            value={dados.prorrogacaoCheck || "NAO"}
+            onChange={(e) => atualizarDados({ prorrogacaoCheck: e.target.value })}
             style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
           >
             <option value="NAO">Não</option>

@@ -78,6 +78,8 @@ export const mapearDadosWizard = (dados: any) => {
         "{{N.PROCESSO}}": dados.numeroProcesso || "",
         "{{OBJETO}}": dados.objeto || "",
         "{{CRITERIOS}}": dados.criterios || "ITEM",
+        "{{INSTRUMENTO}}": dados.instrumento || "CONTRATO",
+        "{{PRORROGACAO_CHECK}}": dados.prorrogacaoCheck || "NAO",
         "{{GESTOR}}": gestoresNomes,
         "{{GESTOR_CARGO}}": gestoresCargos,
         "{{FISCAL}}": fiscaisNomes,
