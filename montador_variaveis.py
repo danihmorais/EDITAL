@@ -209,10 +209,10 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     
     tipo_objeto = dados_usuario.get("{{TIPO_OBJETO}}", "AQUISICAO")
     if tipo_objeto == "SERVICO":
-        resultado["{{PRAZO PUB}}"] = "*(...)\nII - no caso de serviços e obras:\n***10 (dez) dias úteis***, quando adotados os critérios de julgamento de menor preço ou de maior desconto, no caso de serviços comuns e de obras e serviços comuns de engenharia; (grifo nosso)*"
+        resultado["{{PRAZO PUB}}"] = ("(...)\n""II - no caso de serviços e obras:\n""***10 (dez) dias úteis***, quando adotados os critérios de julgamento de menor preço ou de maior desconto, no caso de serviços comuns e de obras e serviços comuns de engenharia; (grifo nosso)")
         resultado["{{UNID}}"] = "__REMOVER_COLUNA__"
     else:
-        resultado["{{PRAZO PUB}}"] = "*I - para aquisição de bens:\n***8 (oito) dias úteis***, quando adotados os critérios de julgamento de menor preço ou de maior desconto; (grifo nosso)*"
+        resultado["{{PRAZO PUB}}"] = ("I - para aquisição de bens:\n""***8 (oito) dias úteis***, quando adotados os critérios de julgamento de menor preço ou de maior desconto; (grifo nosso)")
         resultado["{{UNID}}"] = "MARCA/MODELO"
 
     arq_mag = _converter_para_sim(dados_usuario.get("{{ARQ_MAG_CHECK}}", "NAO"))
