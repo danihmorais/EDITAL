@@ -155,6 +155,25 @@ def _valor_por_extenso(valor: float) -> str:
     except Exception:
         return ""
 
+def _numero_por_extenso(n: int) -> str:
+    unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"]
+    dez1 = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"]
+    dezenas = ["", "dez", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"]
+    centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"]
+    if n == 0: return "zero"
+    if n == 100: return "cem"
+    c = n // 100
+    d = (n % 100) // 10
+    u = n % 10
+    res = []
+    if c > 0: res.append(centenas[c])
+    if d == 1:
+        res.append(dez1[u])
+    else:
+        if d > 1: res.append(dezenas[d])
+        if u > 0: res.append(unidades[u])
+    return " e ".join(res)
+
 def _data_por_extenso(data_str: str) -> str:
     meses = ["", "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
     if not data_str:
@@ -338,6 +357,22 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
 
     execucao = resultado.get("{{EXECUCAO}}", resultado.get("EXECUCAO", ""))
     resultado["{{EXECUCAO}}"] = execucao
+
+    prazo_dev = resultado.get("{{PRAZO DEVOLUCAO}}", resultado.get("PRAZO DEVOLUCAO", ""))
+    if prazo_dev:
+        try:
+            num_match = re.search(r'\d+', str(prazo_dev))
+            if num_match:
+                num = int(num_match.group())
+                extenso = _numero_por_extenso(num)
+                resultado["{{PRAZO DEVOLUCAO}}"] = f"{num} ({extenso})"
+            else:
+                resultado["{{PRAZO DEVOLUCAO}}"] = str(prazo_dev)
+        except Exception:
+            resultado["{{PRAZO DEVOLUCAO}}"] = str(prazo_dev)
+
+    esp_esp = resultado.get("{{ESPECIFICACOES ESPECIAIS}}", resultado.get("ESPECIFICACOES ESPECIAIS", ""))
+    resultado["{{ESPECIFICACOES ESPECIAIS}}"] = esp_esp
 
     data_edital = resultado.get("{{DATA DO EDITAL}}", resultado.get("DATA DO EDITAL", ""))
     if data_edital:

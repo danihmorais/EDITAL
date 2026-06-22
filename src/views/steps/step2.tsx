@@ -268,6 +268,27 @@ export default function Step2({ dados, atualizarDados }: any) {
         />
       </div>
 
+      <div>
+        <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Prazo de Devolução / Substituição</label>
+        <input
+          type="text"
+          value={dados.prazoDevolucao || ""}
+          onChange={(e) => atualizarDados({ prazoDevolucao: e.target.value })}
+          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+          placeholder="Ex: 5"
+        />
+      </div>
+
+      <div>
+        <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Especificações Especiais</label>
+        <textarea
+          value={dados.especificacoesEspeciais || ""}
+          onChange={(e) => atualizarDados({ especificacoesEspeciais: e.target.value })}
+          style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", minHeight: "120px" }}
+          placeholder="Insira especificações especiais (pode usar quebras de linha para separar os itens)..."
+        />
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px", background: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <input

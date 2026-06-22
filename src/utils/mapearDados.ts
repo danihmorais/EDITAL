@@ -102,6 +102,8 @@ export const mapearDadosWizard = (dados: any) => {
         "{{CONTRATANTE}}": dados.contratante || "",
         "{{CONTRATADA}}": dados.contratada || "",
         "{{EXECUCAO}}": dados.execucao || "",
+        "{{PRAZO DEVOLUCAO}}": dados.prazoDevolucao || "",
+        "{{ESPECIFICACOES ESPECIAIS}}": dados.especificacoesEspeciais || "",
         "{{VIGENCIA}}": dados.vigencia || "",
         "{{DOTACAO}}": dados.dotacao || "",
         "{{TIPO_OBJETO}}": dados.tipoObjeto || "AQUISICAO",

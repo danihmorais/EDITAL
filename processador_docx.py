@@ -44,9 +44,17 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                 else:
                     break
 
+    inseriu_linha_embranco = False
     for p in paragrafos_remover_set:
         try:
-            p._element.getparent().remove(p._element)
+            parent = p._element.getparent()
+            if parent is not None:
+                idx = list(parent).index(p._element)
+                parent.remove(p._element)
+                if not inseriu_linha_embranco:
+                    novo_p = OxmlElement("w:p")
+                    parent.insert(idx, novo_p)
+                    inseriu_linha_embranco = True
         except Exception:
             pass
 
