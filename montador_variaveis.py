@@ -285,7 +285,7 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         cargos_g = [c.strip() for c in cargos_gestores_str.split(",") if c.strip()]
         for i, nome in enumerate(nomes_g):
             cargo = cargos_g[i] if i < len(cargos_g) else ""
-            bloco = f"**GESTOR:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n**Assinatura: ______________________________________________________**"
+            bloco = f"**GESTOR:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n\n**Assinatura: ______________________________________________________**"
             blocos_ges_fis.append(bloco)
             blocos_ges_ass.append(f"_____________________________\n{nome}\nGESTOR\n ")
 
@@ -296,7 +296,7 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         cargos_f = [c.strip() for c in cargos_fiscais_str.split(",") if c.strip()]
         for i, nome in enumerate(nomes_f):
             cargo = cargos_f[i] if i < len(cargos_f) else ""
-            bloco = f"**FISCAL:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n**Assinatura: ______________________________________________________**"
+            bloco = f"**FISCAL:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n\n**Assinatura: ______________________________________________________**"
             blocos_ges_fis.append(bloco)
             blocos_fis_ass.append(f"_____________________________\n{nome}\nFISCAL\n ")
 
