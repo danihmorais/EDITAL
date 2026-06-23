@@ -112,9 +112,9 @@ export const mapearDadosWizard = (dados: any) => {
         "{{AMOSTRA_CHECK}}": dados.amostra ? "SIM" : "NAO",
         "{{AMOSTRA_TXT}}": dados.textoAmostra || "",
         "{{ARQ_MAG_CHECK}}": dados.arquivoMagnetico && dados.modalidade === "PREGAO_PRESENCIAL" ? "SIM" : "NAO",
-        "{{DFD}}": dados.arquivoDfd ? dados.arquivoDfd.name : "",
-        "{{ETP}}": dados.arquivoEtp ? dados.arquivoEtp.name : "",
-        "{{TR}}": dados.arquivoTr ? dados.arquivoTr.name : "",
+        "{{DFD}}": dados.arquivoDfd ? dados.arquivoDfd.path : "",
+        "{{ETP}}": dados.arquivoEtp ? dados.arquivoEtp.path : "",
+        "{{TR}}": dados.arquivoTr ? dados.arquivoTr.path : "",
     },
     arquivoBase: arquivoBase
   };

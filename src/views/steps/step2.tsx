@@ -271,9 +271,9 @@ export default function Step2({ dados, atualizarDados }: any) {
       <div>
         <label style={{ display: "block", marginBottom: "8px", color: "var(--text-main)", fontWeight: "bold" }}>Prazo de Devolução / Substituição</label>
         <input
-          type="text"
+          type="number"
           value={dados.prazoDevolucao || ""}
-          onChange={(e) => atualizarDados({ prazoDevolucao: e.target.value.replace(/\D/g, "") })}
+          onChange={(e) => atualizarDados({ prazoDevolucao: e.target.value })}
           style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
           placeholder="Ex: 5"
         />

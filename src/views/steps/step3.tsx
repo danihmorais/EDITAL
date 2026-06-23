@@ -1,4 +1,5 @@
 import React from "react";
+import { open } from "@tauri-apps/plugin-dialog";
 
 export default function Step3({ dados, atualizarDados }: any) {
   const handleValorChange = (e: any) => {
@@ -22,6 +23,21 @@ export default function Step3({ dados, atualizarDados }: any) {
   const declAdicionaisArray = Array.isArray(dados.declAdicionais) 
     ? dados.declAdicionais 
     : (typeof dados.declAdicionais === 'string' && dados.declAdicionais.trim() !== '' ? [dados.declAdicionais] : []);
+
+  const selecionarArquivo = async (chave: string) => {
+    const selected = await open({
+      multiple: false,
+      filters: [{
+        name: "Documentos",
+        extensions: ["pdf", "doc", "docx"]
+      }]
+    });
+
+    if (selected && typeof selected === "string") {
+      const nameStr = selected.split(/[\\/]/).pop() || selected;
+      atualizarDados({ [chave]: { name: nameStr, path: selected } });
+    }
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -91,16 +107,13 @@ export default function Step3({ dados, atualizarDados }: any) {
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div>
             <label style={{ display: "block", marginBottom: "6px", color: "var(--text-main)", fontSize: "14px", fontWeight: "bold" }}>Documento de Formalização da Demanda (DFD) — insere em {"{{DFD}}"}</label>
-            <input
-              key={dados.arquivoDfd ? "dfd-loaded" : "dfd-empty"}
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                atualizarDados({ arquivoDfd: file });
-              }}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", display: dados.arquivoDfd ? "none" : "block" }}
-            />
+            <button
+              type="button"
+              onClick={() => selecionarArquivo("arquivoDfd")}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", display: dados.arquivoDfd ? "none" : "block", cursor: "pointer", textAlign: "left" }}
+            >
+              Selecionar arquivo...
+            </button>
             {dados.arquivoDfd && (
               <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-base)", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border)" }}>
                 <span>✓ {dados.arquivoDfd.name} selecionado.</span>
@@ -117,16 +130,13 @@ export default function Step3({ dados, atualizarDados }: any) {
 
           <div>
             <label style={{ display: "block", marginBottom: "6px", color: "var(--text-main)", fontSize: "14px", fontWeight: "bold" }}>Estudo Técnico Preliminar (ETP) — insere em {"{{ETP}}"}</label>
-            <input
-              key={dados.arquivoEtp ? "etp-loaded" : "etp-empty"}
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                atualizarDados({ arquivoEtp: file });
-              }}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", display: dados.arquivoEtp ? "none" : "block" }}
-            />
+            <button
+              type="button"
+              onClick={() => selecionarArquivo("arquivoEtp")}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", display: dados.arquivoEtp ? "none" : "block", cursor: "pointer", textAlign: "left" }}
+            >
+              Selecionar arquivo...
+            </button>
             {dados.arquivoEtp && (
               <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-base)", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border)" }}>
                 <span>✓ {dados.arquivoEtp.name} selecionado.</span>
@@ -143,16 +153,13 @@ export default function Step3({ dados, atualizarDados }: any) {
 
           <div>
             <label style={{ display: "block", marginBottom: "6px", color: "var(--text-main)", fontSize: "14px", fontWeight: "bold" }}>Termo de Referência (TR) — insere em {"{{TR}}"}</label>
-            <input
-              key={dados.arquivoTr ? "tr-loaded" : "tr-empty"}
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                atualizarDados({ arquivoTr: file });
-              }}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", display: dados.arquivoTr ? "none" : "block" }}
-            />
+            <button
+              type="button"
+              onClick={() => selecionarArquivo("arquivoTr")}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", display: dados.arquivoTr ? "none" : "block", cursor: "pointer", textAlign: "left" }}
+            >
+              Selecionar arquivo...
+            </button>
             {dados.arquivoTr && (
               <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-base)", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border)" }}>
                 <span>✓ {dados.arquivoTr.name} selecionado.</span>

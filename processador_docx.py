@@ -131,6 +131,7 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
     remover_amostra = dados.get("__REMOVER_AMOSTRA__", False)
     remover_vistoria = dados.get("__REMOVER_VISTORIA__", False)
     paragrafos_remover_set = set()
+    
     for i, p in enumerate(doc.paragraphs):
         texto_upper = p.text.strip().upper()
         is_amostra = remover_amostra and "AMOSTRA" in texto_upper and len(texto_upper) < 60
@@ -154,6 +155,7 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                     idx -= 1
                 else:
                     break
+                    
     inseriu_linha_embranco = False
     for p in paragrafos_remover_set:
         try:
@@ -167,17 +169,23 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                     inseriu_linha_embranco = True
         except Exception:
             pass
+            
     PLACEHOLDERS_DOC = {"{{DFD}}", "{{ETP}}", "{{TR}}"}
     chaves_doc_processadas = set()
+    
     for chave_ph in PLACEHOLDERS_DOC:
         caminho_arq = str(dados.get(chave_ph, "")).strip()
-        if not caminho_arq or not os.path.exists(caminho_arq):
+        if not caminho_arq:
             continue
+            
         ext = os.path.splitext(caminho_arq)[1].lower()
         chaves_doc_processadas.add(chave_ph)
+        
         for p in list(doc.paragraphs):
             if chave_ph in p.text:
-                if ext == '.docx':
+                if not os.path.exists(caminho_arq):
+                    _substituir_texto_mantendo_formatacao(p, chave_ph, f"[ERRO: ARQUIVO NÃO ENCONTRADO - {caminho_arq}]")
+                elif ext == '.docx':
                     _mesclar_docx_no_local(p, caminho_arq)
                 elif ext == '.pdf':
                     texto_pdf = _extrair_texto_pdf(caminho_arq)
@@ -185,12 +193,16 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                 else:
                     _substituir_texto_mantendo_formatacao(p, chave_ph, os.path.basename(caminho_arq))
                 break
+                
         dados = dict(dados)
         dados[chave_ph] = ""
+        
     if not e_arp:
         _remover_secao_arp(doc)
+        
     for paragrafo in list(doc.paragraphs):
         _processar_paragrafo(paragrafo, dados, e_arp)
+        
     for tabela in doc.tables:
         colunas_para_remover = []
         for i, coluna in enumerate(tabela.columns):
@@ -212,6 +224,7 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
             for celula in linha.cells:
                 for paragrafo in list(celula.paragraphs):
                     _processar_paragrafo(paragrafo, dados, e_arp)
+                    
     for section in doc.sections:
         for header in [section.header, section.first_page_header, section.even_page_header]:
             if header:
@@ -231,6 +244,7 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                         for celula in linha.cells:
                             for paragrafo in list(celula.paragraphs):
                                 _processar_paragrafo(paragrafo, dados, e_arp)
+                                
     def limpar_realce_verde(elemento_raiz):
         for node in elemento_raiz.xpath('.//w:highlight'):
             val = node.get(qn('w:val'))
@@ -238,6 +252,7 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                 parent = node.getparent()
                 if parent is not None:
                     parent.remove(node)
+                    
     limpar_realce_verde(doc.element)
     for section in doc.sections:
         for header in [section.header, section.first_page_header, section.even_page_header]:
@@ -246,6 +261,7 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
         for footer in [section.footer, section.first_page_footer, section.even_page_footer]:
             if footer:
                 limpar_realce_verde(footer._element)
+                
     doc.save(caminho_saida)
     return caminho_saida
 
@@ -316,10 +332,10 @@ def _aplicar_formatacao_markdown_avancado(paragrafo):
                         new_run.font.bold = True
                     else:
                         new_run.text = part
-                try:
-                    run._element.getparent().remove(run._element)
-                except Exception:
-                    pass
+            try:
+                run._element.getparent().remove(run._element)
+            except Exception:
+                pass
 
 def _inserir_multilinhas_safe(paragrafo, marcador, valor_str):
     texto_p = paragrafo.text
@@ -381,6 +397,7 @@ def _processar_paragrafo(paragrafo, dados, e_arp):
             else:
                 if highlight_element is not None:
                     run._element.rPr.remove(highlight_element)
+                    
     paragrafos_para_processar = [paragrafo]
     for chave, valor in dados.items():
         if chave in ["E_ARP", "__REMOVER_AMOSTRA__", "__REMOVER_VISTORIA__"]:
@@ -403,6 +420,7 @@ def _processar_paragrafo(paragrafo, dados, e_arp):
                     if not valor_str.strip() and not p_atual.text.strip():
                         apagou_algo = True
         paragrafos_para_processar.extend(novos_adicionados)
+        
     for p_atual in paragrafos_para_processar:
         _aplicar_formatacao_markdown_avancado(p_atual)
         if apagou_algo and not p_atual.text.strip():
