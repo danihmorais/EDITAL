@@ -10,6 +10,51 @@ from docx.opc.part import Part
 from docx.opc.packuri import PackURI
 from lxml import etree
 
+def remover_paginas_em_branco(caminho_docx: str):
+    doc = Document(caminho_docx)
+    body = doc.element.body
+    elementos = list(body)
+    
+    for el in reversed(elementos):
+        if el.tag.endswith('sectPr'):
+            continue
+        if el.tag.endswith('p'):
+            texto = "".join(el.itertext()).strip()
+            tem_quebra = bool(el.xpath('.//w:br[@w:type="page"]') or el.xpath('.//w:lastRenderedPageBreak'))
+            if not texto and not tem_quebra:
+                try:
+                    el.getparent().remove(el)
+                except Exception:
+                    pass
+            else:
+                break
+        else:
+            break
+
+    elementos = list(body)
+    ultimo_foi_quebra = True
+    
+    for el in elementos:
+        if el.tag.endswith('p'):
+            texto = "".join(el.itertext()).strip()
+            tem_quebra = bool(el.xpath('.//w:br[@w:type="page"]'))
+            
+            if tem_quebra:
+                if ultimo_foi_quebra and not texto:
+                    para_remover = el.xpath('.//w:br[@w:type="page"]')
+                    for br in para_remover:
+                        try:
+                            br.getparent().remove(br)
+                        except Exception:
+                            pass
+                ultimo_foi_quebra = True
+            elif texto:
+                ultimo_foi_quebra = False
+        elif el.tag.endswith('tbl'):
+            ultimo_foi_quebra = False
+            
+    doc.save(caminho_docx)
+
 def _mesclar_docx_no_local(doc, paragrafo_alvo, caminho_docx):
     try:
         with open(caminho_docx, 'rb') as f:
@@ -51,7 +96,6 @@ def _remover_secao_arp(doc):
     elementos_body = list(body)
     arp_element = None
     
-    # Encontra o parágrafo com o título principal da Minuta da ARP
     for p in reversed(doc.paragraphs):
         texto = p.text.strip().upper()
         if "MINUTA DA ATA DE REGISTRO DE PREÇOS" in texto or "MINUTA DE ATA DE REGISTRO DE PREÇOS" in texto:
@@ -59,7 +103,6 @@ def _remover_secao_arp(doc):
                 arp_element = p._element
                 break
                 
-    # Limpa referências de TOC (índice) da ARP para evitar erros no Word
     for p in doc.paragraphs:
         texto = p.text.strip().upper()
         if "MINUTA DA ATA DE REGISTRO DE PREÇOS" in texto or "MINUTA DE ATA DE REGISTRO DE PREÇOS" in texto:
@@ -87,7 +130,6 @@ def _remover_secao_arp(doc):
         return
         
     temp_idx = idx_corte
-    # Volta até 10 elementos para tentar achar o "ANEXO X" ou a Quebra de Página que antecede a ARP
     limite_busca = max(0, idx_corte - 10)
     for j in range(idx_corte - 1, limite_busca - 1, -1):
         el_j = elementos_body[j]
@@ -103,20 +145,15 @@ def _remover_secao_arp(doc):
                          
         if is_page_break:
             temp_idx = j
-            break # Paramos na primeira quebra de página que encontrarmos voltando
+            break
             
         if txt.startswith("ANEXO") and len(txt) < 80:
             temp_idx = j
-            # Não damos break no Anexo, pois queremos ver se tem um page_break logo antes dele
             
     idx_corte = temp_idx
     
-    # O loop "guloso" que apagava páginas a mais foi removido daqui!
-    # Apenas deletamos do ponto de corte exato até o final.
-
     ultimo_elemento = elementos_body[-1] if elementos_body else None
     for el in elementos_body[idx_corte:]:
-        # Preserva a configuração da seção no final do documento (importante pro Word não corromper)
         if el is ultimo_elemento and el.tag.endswith('sectPr'):
             continue
         try:
@@ -259,6 +296,7 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                 limpar_realce_verde(footer._element)
                 
     doc.save(caminho_saida)
+    remover_paginas_em_branco(caminho_saida)
     return caminho_saida
 
 def _substituir_texto_mantendo_formatacao(paragrafo, marcador, valor_str):

@@ -61,6 +61,19 @@ def _subtrair_15_min(hora_str: str) -> str:
     except Exception:
         return hora_str
 
+def _dia_util_anterior(data_str: str) -> str:
+    if not data_str:
+        return ""
+    try:
+        formato = "%d/%m/%Y" if "/" in data_str else "%Y-%m-%d"
+        data = datetime.strptime(data_str, formato)
+        data -= timedelta(days=1)
+        while data.weekday() > 4:
+            data -= timedelta(days=1)
+        return data.strftime(formato)
+    except Exception:
+        return data_str
+
 def _limpar_valor_numerico(valor) -> float:
     if isinstance(valor, (int, float)):
         return float(valor)
@@ -342,6 +355,12 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
             resultado["{{HORA INICIO CRED}}"] = _subtrair_15_min(hora_sessao)
         else:
             resultado["{{HORA INICIO CRED}}"] = ""
+
+    if modalidade_raw == "DISPENSA":
+        data_sessao = resultado.get("{{DATA DA SESSAO}}", dados_usuario.get("{{DATA DA SESSAO}}", ""))
+        if data_sessao:
+            resultado["{{DATA DA SESSAO2}}"] = _dia_util_anterior(data_sessao)
+        resultado["{{HORA FIM DO REC}}"] = "23h59min"
 
     decl_adicionais = dados_usuario.get("{{DECL.ADICIONAIS}}", "")
     resultado["{{DECL.ADICIONAIS}}"] = decl_adicionais
