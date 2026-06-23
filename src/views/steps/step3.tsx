@@ -29,7 +29,7 @@ export default function Step3({ dados, atualizarDados }: any) {
       multiple: false,
       filters: [{
         name: "Documentos",
-        extensions: ["pdf", "doc", "docx"]
+        extensions: ["doc", "docx"]
       }]
     });
 

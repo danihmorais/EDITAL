@@ -1,68 +1,65 @@
+import os
+import re
+import copy
+import uuid
 from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.text.paragraph import Paragraph
+from docx.opc.part import Part
+from docx.opc.packuri import PackURI
 from lxml import etree
-import copy
-import os
-import re
 
-def _mesclar_docx_no_local(paragrafo_alvo, caminho_docx):
+def _mesclar_docx_no_local(doc, paragrafo_alvo, caminho_docx):
     try:
-        doc_fonte = Document(caminho_docx)
+        with open(caminho_docx, 'rb') as f:
+            docx_bytes = f.read()
     except Exception as e:
-        _substituir_texto_mantendo_formatacao(paragrafo_alvo, paragrafo_alvo.text, f"[Erro ao abrir DOCX: {e}]")
+        _substituir_texto_mantendo_formatacao(paragrafo_alvo, paragrafo_alvo.text, f"[ERRO AO LER DOCX: {e}]")
         return
+
+    part = doc.part
+    chunk_name = f'/word/embeddings/chunk_{uuid.uuid4().hex}.docx'
+    uri = PackURI(chunk_name)
+    
+    alt_part = Part(
+        partname=uri,
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        blob=docx_bytes,
+        package=part.package
+    )
+    
+    rel_id = part.relate_to(alt_part, 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/aFChunk')
+    
+    altChunk = OxmlElement('w:altChunk')
+    altChunk.set(qn('r:id'), rel_id)
+    
+    altChunkPr = OxmlElement('w:altChunkPr')
+    matchSrc = OxmlElement('w:matchSrc')
+    matchSrc.set(qn('w:val'), '1')
+    altChunkPr.append(matchSrc)
+    altChunk.append(altChunkPr)
+    
     parent = paragrafo_alvo._element.getparent()
-    if parent is None:
-        return
-    idx = list(parent).index(paragrafo_alvo._element)
-    parent.remove(paragrafo_alvo._element)
-    for child in list(doc_fonte.element.body):
-        if child.tag.endswith('sectPr'):
-            continue
-        parent.insert(idx, copy.deepcopy(child))
-        idx += 1
-
-def _extrair_texto_pdf(caminho_pdf):
-    try:
-        import pdfplumber
-        paginas = []
-        with pdfplumber.open(caminho_pdf) as pdf:
-            for page in pdf.pages:
-                texto = page.extract_text()
-                if texto and texto.strip():
-                    paginas.append(texto.strip())
-        return "\n\n".join(paginas)
-    except ImportError:
-        pass
-    except Exception as e:
-        return f"[Erro ao ler PDF com pdfplumber: {e}]"
-    try:
-        from pypdf import PdfReader
-        reader = PdfReader(caminho_pdf)
-        paginas = []
-        for page in reader.pages:
-            texto = page.extract_text()
-            if texto and texto.strip():
-                paginas.append(texto.strip())
-        return "\n\n".join(paginas)
-    except ImportError:
-        pass
-    except Exception as e:
-        return f"[Erro ao ler PDF com pypdf: {e}]"
-    return f"[PDF: {os.path.basename(caminho_pdf)} — instale pdfplumber ou pypdf para extrair conteúdo]"
+    if parent is not None:
+        idx = list(parent).index(paragrafo_alvo._element)
+        parent.insert(idx, altChunk)
+        parent.remove(paragrafo_alvo._element)
 
 def _remover_secao_arp(doc):
     body = doc.element.body
     elementos_body = list(body)
     arp_element = None
+    
+    # Encontra o parágrafo com o título principal da Minuta da ARP
     for p in reversed(doc.paragraphs):
         texto = p.text.strip().upper()
         if "MINUTA DA ATA DE REGISTRO DE PREÇOS" in texto or "MINUTA DE ATA DE REGISTRO DE PREÇOS" in texto:
             if len(texto) < 200:
                 arp_element = p._element
                 break
+                
+    # Limpa referências de TOC (índice) da ARP para evitar erros no Word
     for p in doc.paragraphs:
         texto = p.text.strip().upper()
         if "MINUTA DA ATA DE REGISTRO DE PREÇOS" in texto or "MINUTA DE ATA DE REGISTRO DE PREÇOS" in texto:
@@ -73,19 +70,25 @@ def _remover_secao_arp(doc):
                         p._element.getparent().remove(p._element)
                     except Exception:
                         pass
+                        
     if arp_element is None:
         return
+        
     el = arp_element
     while el is not None and el.getparent() is not body:
         el = el.getparent()
+        
     if el is None:
         return
+        
     try:
         idx_corte = elementos_body.index(el)
     except ValueError:
         return
+        
     temp_idx = idx_corte
-    limite_busca = max(0, idx_corte - 30)
+    # Volta até 10 elementos para tentar achar o "ANEXO X" ou a Quebra de Página que antecede a ARP
+    limite_busca = max(0, idx_corte - 10)
     for j in range(idx_corte - 1, limite_busca - 1, -1):
         el_j = elementos_body[j]
         txt = re.sub(r'\s+', ' ', "".join(el_j.itertext()).strip().upper())
@@ -93,31 +96,27 @@ def _remover_secao_arp(doc):
             xml_str = etree.tostring(el_j, encoding='unicode').upper()
         except Exception:
             xml_str = ""
+            
         is_page_break = ('TYPE="PAGE"' in xml_str.replace(" ", "") or
                          "PAGEBREAKBEFORE" in xml_str.replace(" ", "") or
                          "BREAK" in xml_str)
+                         
         if is_page_break:
             temp_idx = j
-            break
+            break # Paramos na primeira quebra de página que encontrarmos voltando
+            
         if txt.startswith("ANEXO") and len(txt) < 80:
             temp_idx = j
+            # Não damos break no Anexo, pois queremos ver se tem um page_break logo antes dele
+            
     idx_corte = temp_idx
-    while idx_corte > 0:
-        el_prev = elementos_body[idx_corte - 1]
-        txt = "".join(el_prev.itertext()).strip()
-        try:
-            xml_str = etree.tostring(el_prev, encoding='unicode').upper()
-        except Exception:
-            xml_str = ""
-        is_page_break = ('TYPE="PAGE"' in xml_str.replace(" ", "") or
-                         "PAGEBREAKBEFORE" in xml_str.replace(" ", "") or
-                         "BREAK" in xml_str)
-        if not txt or is_page_break:
-            idx_corte -= 1
-        else:
-            break
+    
+    # O loop "guloso" que apagava páginas a mais foi removido daqui!
+    # Apenas deletamos do ponto de corte exato até o final.
+
     ultimo_elemento = elementos_body[-1] if elementos_body else None
     for el in elementos_body[idx_corte:]:
+        # Preserva a configuração da seção no final do documento (importante pro Word não corromper)
         if el is ultimo_elemento and el.tag.endswith('sectPr'):
             continue
         try:
@@ -186,12 +185,9 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                 if not os.path.exists(caminho_arq):
                     _substituir_texto_mantendo_formatacao(p, chave_ph, f"[ERRO: ARQUIVO NÃO ENCONTRADO - {caminho_arq}]")
                 elif ext == '.docx':
-                    _mesclar_docx_no_local(p, caminho_arq)
-                elif ext == '.pdf':
-                    texto_pdf = _extrair_texto_pdf(caminho_arq)
-                    _inserir_multilinhas_safe(p, chave_ph, texto_pdf)
+                    _mesclar_docx_no_local(doc, p, caminho_arq)
                 else:
-                    _substituir_texto_mantendo_formatacao(p, chave_ph, os.path.basename(caminho_arq))
+                    _substituir_texto_mantendo_formatacao(p, chave_ph, f"[ERRO: FORMATO NÃO SUPORTADO. ENVIE APENAS .DOCX - {os.path.basename(caminho_arq)}]")
                 break
                 
         dados = dict(dados)
