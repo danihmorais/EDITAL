@@ -5,7 +5,9 @@ import Step2 from "./steps/step2";
 import Step3 from "./steps/step3";
 import { mapearDadosWizard } from "../utils/mapearDados";
 import { ThemeContext } from "../context/ThemeContext";
+import { verificarAtualizacao } from "../updater";
 import "./wizard.css";
+import logo from "../assets/logo.png";
 
 export default function Wizard() {
   const [etapaAtual, setEtapaAtual] = useState(0);
@@ -53,6 +55,7 @@ export default function Wizard() {
   const [statusTexto, setStatusTexto] = useState("Iniciando...");
   const [erroMsg, setErroMsg] = useState<string | null>(null);
   const [geracaoSucesso, setGeracaoSucesso] = useState(false);
+  const [aguardandoUpdate, setAguardandoUpdate] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useContext(ThemeContext);
 
@@ -183,8 +186,10 @@ export default function Wizard() {
       <div className="wiz-header">
         <div className="wiz-header-inner">
           <div className="wiz-brand">
-            <div className="wiz-brand-icon">🏛️</div>
-            LICITA.AI
+            <div className="wiz-brand-icon">
+              <img src={logo} alt="Logo" />
+            </div>
+            MONTA EDITAL
           </div>
           
           <div className="wiz-stepper">
@@ -208,9 +213,19 @@ export default function Wizard() {
             ))}
           </div>
 
-          <button onClick={toggleTheme} className="wiz-btn-ghost" style={{ padding: "8px", borderRadius: "8px" }}>
-            {theme === "dark" ? "☀️" : "🌙"}
-          </button>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button 
+              onClick={() => verificarAtualizacao(setAguardandoUpdate)} 
+              className="wiz-btn-ghost" 
+              style={{ padding: "8px 12px", borderRadius: "8px", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}
+              disabled={aguardandoUpdate}
+            >
+              {aguardandoUpdate ? "⏳" : "🔄"} {aguardandoUpdate ? "Atualizando..." : "Atualizar"}
+            </button>
+            <button onClick={toggleTheme} className="wiz-btn-ghost" style={{ padding: "8px", borderRadius: "8px" }}>
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
+          </div>
         </div>
       </div>
 

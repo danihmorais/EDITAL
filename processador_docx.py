@@ -17,6 +17,13 @@ def remover_paginas_em_branco(caminho_docx: str):
     
     for el in reversed(elementos):
         if el.tag.endswith('sectPr'):
+            type_el = el.xpath('.//w:type')
+            if type_el:
+                type_el[0].set(qn('w:val'), 'continuous')
+            else:
+                new_type = OxmlElement('w:type')
+                new_type.set(qn('w:val'), 'continuous')
+                el.append(new_type)
             continue
         if el.tag.endswith('p'):
             texto = "".join(el.itertext()).strip()
@@ -38,6 +45,17 @@ def remover_paginas_em_branco(caminho_docx: str):
         if el.tag.endswith('p'):
             texto = "".join(el.itertext()).strip()
             tem_quebra = bool(el.xpath('.//w:br[@w:type="page"]'))
+            
+            sectPrs = el.xpath('.//w:pPr/w:sectPr')
+            if sectPrs and not texto:
+                for sectPr in sectPrs:
+                    type_el = sectPr.xpath('.//w:type')
+                    if type_el:
+                        type_el[0].set(qn('w:val'), 'continuous')
+                    else:
+                        new_type = OxmlElement('w:type')
+                        new_type.set(qn('w:val'), 'continuous')
+                        sectPr.append(new_type)
             
             if tem_quebra:
                 if ultimo_foi_quebra and not texto:

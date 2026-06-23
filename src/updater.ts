@@ -1,7 +1,7 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
 
-const REPO_URL = "https://api.github.com/repos/danihmorais/PRONTUARIO/releases/latest";
+const REPO_URL = "https://api.github.com/repos/danihmorais/EDITAL/releases/latest";
 
 export async function verificarAtualizacao(
   setAguardandoUpdate: (estado: boolean) => void
