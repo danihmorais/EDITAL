@@ -19,7 +19,6 @@ export default function Step3({ dados, atualizarDados }: any) {
   const numVigencia = vigenciaArr.length > 0 && !isNaN(Number(vigenciaArr[0])) ? vigenciaArr[0] : "";
   const unitVigencia = vigenciaArr.length > 1 ? vigenciaArr[1] : "meses";
 
-  // Tratamento para garantir que as declarações adicionais funcionam como lista, mesmo que o dado legado seja string
   const declAdicionaisArray = Array.isArray(dados.declAdicionais) 
     ? dados.declAdicionais 
     : (typeof dados.declAdicionais === 'string' && dados.declAdicionais.trim() !== '' ? [dados.declAdicionais] : []);
@@ -93,17 +92,25 @@ export default function Step3({ dados, atualizarDados }: any) {
           <div>
             <label style={{ display: "block", marginBottom: "6px", color: "var(--text-main)", fontSize: "14px", fontWeight: "bold" }}>Documento de Formalização da Demanda (DFD) — insere em {"{{DFD}}"}</label>
             <input
+              key={dados.arquivoDfd ? "dfd-loaded" : "dfd-empty"}
               type="file"
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.doc,.docx"
               onChange={(e) => {
                 const file = e.target.files?.[0] || null;
                 atualizarDados({ arquivoDfd: file });
               }}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", display: dados.arquivoDfd ? "none" : "block" }}
             />
             {dados.arquivoDfd && (
-              <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold" }}>
-                ✓ {dados.arquivoDfd.name} selecionado.
+              <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-base)", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                <span>✓ {dados.arquivoDfd.name} selecionado.</span>
+                <button
+                  type="button"
+                  onClick={() => atualizarDados({ arquivoDfd: null })}
+                  style={{ padding: "4px 10px", background: "transparent", color: "var(--btn-danger)", border: "1px solid var(--btn-danger)", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}
+                >
+                  Cancelar
+                </button>
               </div>
             )}
           </div>
@@ -111,17 +118,25 @@ export default function Step3({ dados, atualizarDados }: any) {
           <div>
             <label style={{ display: "block", marginBottom: "6px", color: "var(--text-main)", fontSize: "14px", fontWeight: "bold" }}>Estudo Técnico Preliminar (ETP) — insere em {"{{ETP}}"}</label>
             <input
+              key={dados.arquivoEtp ? "etp-loaded" : "etp-empty"}
               type="file"
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.doc,.docx"
               onChange={(e) => {
                 const file = e.target.files?.[0] || null;
                 atualizarDados({ arquivoEtp: file });
               }}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", display: dados.arquivoEtp ? "none" : "block" }}
             />
             {dados.arquivoEtp && (
-              <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold" }}>
-                ✓ {dados.arquivoEtp.name} selecionado.
+              <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-base)", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                <span>✓ {dados.arquivoEtp.name} selecionado.</span>
+                <button
+                  type="button"
+                  onClick={() => atualizarDados({ arquivoEtp: null })}
+                  style={{ padding: "4px 10px", background: "transparent", color: "var(--btn-danger)", border: "1px solid var(--btn-danger)", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}
+                >
+                  Cancelar
+                </button>
               </div>
             )}
           </div>
@@ -129,17 +144,25 @@ export default function Step3({ dados, atualizarDados }: any) {
           <div>
             <label style={{ display: "block", marginBottom: "6px", color: "var(--text-main)", fontSize: "14px", fontWeight: "bold" }}>Termo de Referência (TR) — insere em {"{{TR}}"}</label>
             <input
+              key={dados.arquivoTr ? "tr-loaded" : "tr-empty"}
               type="file"
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.doc,.docx"
               onChange={(e) => {
                 const file = e.target.files?.[0] || null;
                 atualizarDados({ arquivoTr: file });
               }}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)", display: dados.arquivoTr ? "none" : "block" }}
             />
             {dados.arquivoTr && (
-              <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold" }}>
-                ✓ {dados.arquivoTr.name} selecionado.
+              <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--btn-success)", fontWeight: "bold", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-base)", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                <span>✓ {dados.arquivoTr.name} selecionado.</span>
+                <button
+                  type="button"
+                  onClick={() => atualizarDados({ arquivoTr: null })}
+                  style={{ padding: "4px 10px", background: "transparent", color: "var(--btn-danger)", border: "1px solid var(--btn-danger)", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}
+                >
+                  Cancelar
+                </button>
               </div>
             )}
           </div>

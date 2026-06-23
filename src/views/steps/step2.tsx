@@ -273,7 +273,7 @@ export default function Step2({ dados, atualizarDados }: any) {
         <input
           type="text"
           value={dados.prazoDevolucao || ""}
-          onChange={(e) => atualizarDados({ prazoDevolucao: e.target.value })}
+          onChange={(e) => atualizarDados({ prazoDevolucao: e.target.value.replace(/\D/g, "") })}
           style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-base)", color: "var(--text-main)" }}
           placeholder="Ex: 5"
         />

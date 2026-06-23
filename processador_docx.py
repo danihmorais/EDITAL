@@ -151,6 +151,23 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                 except Exception:
                     pass
 
+    def limpar_realce_verde(elemento_raiz):
+        for node in elemento_raiz.xpath('.//w:highlight'):
+            val = node.get(qn('w:val'))
+            if val in ['green', 'brightGreen']:
+                parent = node.getparent()
+                if parent is not None:
+                    parent.remove(node)
+
+    limpar_realce_verde(doc.element)
+    for section in doc.sections:
+        for header in [section.header, section.first_page_header, section.even_page_header]:
+            if header:
+                limpar_realce_verde(header._element)
+        for footer in [section.footer, section.first_page_footer, section.even_page_footer]:
+            if footer:
+                limpar_realce_verde(footer._element)
+
     doc.save(caminho_saida)
     return caminho_saida
 

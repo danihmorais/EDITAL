@@ -304,9 +304,9 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         cargos_g = [c.strip() for c in cargos_gestores_str.split(",") if c.strip()]
         for i, nome in enumerate(nomes_g):
             cargo = cargos_g[i] if i < len(cargos_g) else ""
-            bloco = f"**GESTOR:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n\n**Assinatura: ______________________________________________________**"
+            bloco = f"**GESTOR:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n\n**Assinatura: ______________________________________________________**\n"
             blocos_ges_fis.append(bloco)
-            blocos_ges_ass.append(f"_____________________________\n{nome}\nGESTOR\n ")
+            blocos_ges_ass.append(f"\n\n_____________________________\n{nome}\nGESTOR\n ")
 
     blocos_fis_ass = []
 
@@ -315,9 +315,9 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
         cargos_f = [c.strip() for c in cargos_fiscais_str.split(",") if c.strip()]
         for i, nome in enumerate(nomes_f):
             cargo = cargos_f[i] if i < len(cargos_f) else ""
-            bloco = f"**FISCAL:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n\n**Assinatura: ______________________________________________________**"
+            bloco = f"**FISCAL:**\nNome: {nome}\nCargo (se for o caso): {cargo}\nCPF:\n\n**Assinatura: ______________________________________________________**\n"
             blocos_ges_fis.append(bloco)
-            blocos_fis_ass.append(f"_____________________________\n{nome}\nFISCAL\n ")
+            blocos_fis_ass.append(f"\n\n_____________________________\n{nome}\nFISCAL\n ")
 
     resultado["{{GES.FIS.ANEXOS}}"] = "\n".join(blocos_ges_fis) if blocos_ges_fis else ""
     resultado["{{GES.ASS}}"] = "\n".join(blocos_ges_ass) if blocos_ges_ass else ""
@@ -394,10 +394,10 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     exclusivo_raw = dados_usuario.get("{{EXCLUSIVO}}", "NAO")
     if _converter_para_sim(exclusivo_raw):
         resultado["{{EXCLUSIVO}}"] = "SIM"
-        resultado["{{EXCLUSIVO TXT}}"] = "Nos termos do art. 47 e 48 da LCP 123/2006, que versa que a Administração Pública “deverá realizar processo licitatório destinado exclusivamente à participação de microempresas e empresas de pequeno porte nos itens de contratação cujo valor seja de até R$ 80.000,00 (oitenta mil reais)”, e considerando ainda que este tipo de contratação é comumente realizado por empresas de pequeno porte em valores de mercado, hipótese no qual não haverá risco de oportunidade significativos, **esta licitação SERÁ exclusiva para ME/EPP.**"
+        resultado["{{EXCLUSIVO TXT}}"] = "Nos termos do art. 47 e 48 da LCP 123/2006, que versa que a Administração Pública “deverá realizar processo licitatório destinado exclusivamente à participação de microempresas e empresas de pequeno porte nos itens de contratação cujo valor seja de até R$ 80.000,00 (oitenta mil reais)”, e considerando ainda que este tipo de contratação é comumente realizado por empresas de pequeno porte em valores de mercado, hipótese no qual não haverá risco de oportunidade significativos, ***esta licitação SERÁ exclusiva para ME/EPP.***"
     else:
         resultado["{{EXCLUSIVO}}"] = "NÃO"
-        resultado["{{EXCLUSIVO TXT}}"] = "Nos termos do art. 47, 48 e 49 da LCP 123/2006, que versa que “o tratamento diferenciado e simplificado para as microempresas e empresas de pequeno porte” pode ser afastado quando “não for vantajoso para a administração pública ou representar prejuízo ao conjunto ou complexo do objeto a ser contratado” e, considerando ainda a justificativa apresentada no bojo do Estudo Técnico Preliminar e no Termo de referência, **esta licitação NÃO será exclusiva para ME/EPP, sendo concedido, porém, o benefício do empate ficto e demais tratamentos diferenciados para tais empresas.**"
+        resultado["{{EXCLUSIVO TXT}}"] = "Nos termos do art. 47, 48 e 49 da LCP 123/2006, que versa que “o tratamento diferenciado e simplificado para as microempresas e empresas de pequeno porte” pode ser afastado quando “não for vantajoso para a administração pública ou representar prejuízo ao conjunto ou complexo do objeto a ser contratado” e, considerando ainda a justificativa apresentada no bojo do Estudo Técnico Preliminar e no Termo de referência, ***esta licitação NÃO será exclusiva para ME/EPP, sendo concedido, porém, o benefício do empate ficto e demais tratamentos diferenciados para tais empresas.***"
 
     return resultado
 
