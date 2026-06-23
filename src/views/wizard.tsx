@@ -5,6 +5,7 @@ import Step2 from "./steps/step2";
 import Step3 from "./steps/step3";
 import { mapearDadosWizard } from "../utils/mapearDados";
 import { ThemeContext } from "../context/ThemeContext";
+import "./wizard.css";
 
 export default function Wizard() {
   const [etapaAtual, setEtapaAtual] = useState(0);
@@ -14,6 +15,7 @@ export default function Wizard() {
     modalidade: "PREGAO_ELETRONICO",
     criterios: "ITEM",
     tipoObjeto: "AQUISICAO",
+    instrumento: "CONTRATO",
     dotacao: "",
     dotacaoImagens: [],
     quantidadeItens: "",
@@ -24,8 +26,8 @@ export default function Wizard() {
     horaSessao: "",
     dataRecProp1: (() => {const d = new Date(); do { d.setDate(d.getDate() + 1); } while (d.getDay() === 0 || d.getDay() === 6); return d.toISOString().split("T")[0]; })(),
     objeto: "",
-    gestores: [],
-    fiscais: [],
+    gestores: [{ nome: "", cargo: "" }],
+    fiscais: [{ nome: "", cargo: "" }],
     execucao: "",
     prazoDevolucao: "",
     especificacoesEspeciais: "",
@@ -40,6 +42,7 @@ export default function Wizard() {
     contratada: "",
     valor: "",
     exclusivo: "NAO",
+    prorrogacaoCheck: "SIM",
     itens: [],
     arquivoDfd: null,
     arquivoEtp: null,
@@ -52,7 +55,6 @@ export default function Wizard() {
   const [geracaoSucesso, setGeracaoSucesso] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useContext(ThemeContext);
-  const isDark = theme === "dark";
 
   const atualizarDados = (novosDados: Partial<typeof dados>) => {
     setDados((prev) => ({ ...prev, ...novosDados }));
@@ -67,11 +69,13 @@ export default function Wizard() {
   const validarEtapa = () => {
     switch (etapaAtual) {
       case 0:
-        return dados.numeroProcesso.trim() !== "" && dados.numeroModalidade.trim() !== "";
+        return !!(dados.modalidade && dados.criterios && dados.instrumento && dados.dataRecProp1 && dados.dataSessao && dados.horaSessao && dados.dataEdital);
       case 1:
-        return dados.objeto.trim() !== "";
+        const hasG = dados.gestores && dados.gestores.length > 0 && dados.gestores[0].nome.trim() && dados.gestores[0].cargo.trim();
+        const hasF = dados.fiscais && dados.fiscais.length > 0 && dados.fiscais[0].nome.trim() && dados.fiscais[0].cargo.trim();
+        return !!(dados.tipoObjeto && dados.quantidadeItens && dados.quantidadeLotes && dados.dotacao && dados.objeto && dados.execucao && dados.prazoDevolucao && hasG && hasF);
       case 2:
-        return dados.vigencia.trim() !== "";
+        return !!(dados.vigencia && dados.valor && dados.exclusivo && dados.prorrogacaoCheck && dados.arquivoDfd && dados.arquivoEtp && dados.arquivoTr);
       default:
         return true;
     }
@@ -133,37 +137,37 @@ export default function Wizard() {
 
   if (carregando) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", backgroundColor: "var(--bg-base)" }}>
-        <div style={{ background: "var(--bg-panel)", padding: "40px", borderRadius: "24px", boxShadow: "var(--shadow-lg)", textAlign: "center", width: "100%", maxWidth: "620px" }}>
+      <div className="wiz-root" style={{ alignItems: "center", justifyContent: "center" }}>
+        <div className="wiz-card" style={{ width: "100%", maxWidth: "620px", textAlign: "center", padding: "40px" }}>
           {erroMsg && (
             <>
               <div style={{ fontSize: "44px", marginBottom: "12px" }}>⚠️</div>
-              <h2 style={{ margin: "0 0 16px 0", color: "var(--btn-danger)", fontSize: "22px" }}>Erro na Geração</h2>
-              <div style={{ background: "var(--bg-subtle)", border: "1px solid var(--btn-danger)", borderRadius: "10px", padding: "16px", marginBottom: "24px", textAlign: "left", maxHeight: "260px", overflowY: "auto" }}>
-                <pre style={{ color: "var(--btn-danger)", fontSize: "13px", margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "inherit" }}>{erroMsg}</pre>
+              <h2 style={{ margin: "0 0 16px 0", color: "var(--wiz-error)", fontSize: "22px" }}>Erro na Geração</h2>
+              <div style={{ background: "var(--wiz-error-soft)", border: "1px solid var(--wiz-error)", borderRadius: "10px", padding: "16px", marginBottom: "24px", textAlign: "left", maxHeight: "260px", overflowY: "auto" }}>
+                <pre style={{ color: "var(--wiz-error)", fontSize: "13px", margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "inherit" }}>{erroMsg}</pre>
               </div>
-              <button onClick={() => { setCarregando(false); setErroMsg(null); }} style={{ padding: "12px 32px", background: "var(--btn-primary)", color: "#ffffff", border: "none", borderRadius: "12px", fontWeight: "bold", fontSize: "14px", cursor: "pointer" }}>← Voltar e Tentar Novamente</button>
+              <button onClick={() => { setCarregando(false); setErroMsg(null); }} className="wiz-btn wiz-btn-primary">← Voltar e Tentar Novamente</button>
             </>
           )}
 
           {geracaoSucesso && !erroMsg && (
             <>
               <div style={{ fontSize: "44px", marginBottom: "12px" }}>✅</div>
-              <h2 style={{ margin: "0 0 16px 0", color: "var(--btn-success)", fontSize: "22px" }}>Edital Gerado com Sucesso!</h2>
-              <p style={{ color: "var(--text-muted)", margin: "0 0 24px 0", fontSize: "14px" }}>
+              <h2 style={{ margin: "0 0 16px 0", color: "var(--wiz-success)", fontSize: "22px" }}>Edital Gerado com Sucesso!</h2>
+              <p style={{ color: "var(--wiz-text-3)", margin: "0 0 24px 0", fontSize: "14px" }}>
                 Os arquivos foram salvos na pasta{" "}
-                <span onClick={() => invoke("abrir_pasta_documentos")} style={{ color: "var(--btn-primary)", fontWeight: "bold", cursor: "pointer", textDecoration: "underline" }}>Documentos_Gerados</span>.
+                <span onClick={() => invoke("abrir_pasta_documentos")} style={{ color: "var(--wiz-accent)", fontWeight: "bold", cursor: "pointer", textDecoration: "underline" }}>Documentos_Gerados</span>.
               </p>
-              <button onClick={() => { setCarregando(false); setGeracaoSucesso(false); setEtapaAtual(0); }} style={{ padding: "12px 32px", background: "var(--btn-success)", color: "#ffffff", border: "none", borderRadius: "12px", fontWeight: "bold", fontSize: "14px", cursor: "pointer" }}>✓ Concluir</button>
+              <button onClick={() => { setCarregando(false); setGeracaoSucesso(false); setEtapaAtual(0); }} className="wiz-btn" style={{ background: "var(--wiz-success)", color: "#fff" }}>✓ Concluir</button>
             </>
           )}
 
           {!erroMsg && !geracaoSucesso && (
             <>
-              <h2 style={{ margin: "0 0 16px 0", color: "var(--text-main)", fontSize: "24px" }}>Gerando Edital</h2>
-              <p style={{ color: "var(--text-muted)", margin: "0 0 24px 0" }}>{statusTexto}</p>
-              <div style={{ width: "100%", height: "6px", background: "var(--border)", borderRadius: "4px", overflow: "hidden" }}>
-                <div style={{ width: "50%", height: "100%", background: "var(--btn-primary)", transition: "width 0.3s", animation: "progress 2s infinite" }} />
+              <h2 style={{ margin: "0 0 16px 0", color: "var(--wiz-text)", fontSize: "24px" }}>Gerando Edital</h2>
+              <p style={{ color: "var(--wiz-text-3)", margin: "0 0 24px 0" }}>{statusTexto}</p>
+              <div style={{ width: "100%", height: "6px", background: "var(--wiz-border)", borderRadius: "4px", overflow: "hidden" }}>
+                <div style={{ width: "50%", height: "100%", background: "var(--wiz-accent)", transition: "width 0.3s", animation: "progress 2s infinite" }} />
               </div>
             </>
           )}
@@ -175,38 +179,75 @@ export default function Wizard() {
   const podeAvancar = validarEtapa();
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "var(--bg-base)", transition: "background-color 0.3s", fontFamily: "sans-serif" }}>
-      <div style={{ padding: "24px 40px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: "22px", color: "var(--text-main)" }}>
-              {etapaAtual === 0 && "Etapa 1: Processo, Modalidade e Sessão"}
-              {etapaAtual === 1 && "Etapa 2: Objeto, Gestores e Fiscais"}
-              {etapaAtual === 2 && "Etapa 3: Vigência e Declarações"}
-            </h1>
-            <p style={{ margin: "4px 0 0 0", color: "var(--text-muted)", fontSize: "14px" }}>
-              Insira os dados da licitação e confirme a base do TR/ETP/DFD.
-            </p>
+    <div className={`wiz-root ${theme === 'dark' ? 'dark' : ''}`}>
+      <div className="wiz-header">
+        <div className="wiz-header-inner">
+          <div className="wiz-brand">
+            <div className="wiz-brand-icon">🏛️</div>
+            LICITA.AI
           </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ color: "var(--text-muted)", fontWeight: "bold", fontSize: "14px" }}>Passo {etapaAtual + 1} de 3</span>
-          <button onClick={toggleTheme} style={{ width: "44px", height: "44px", borderRadius: "8px", border: "none", cursor: "pointer", background: "var(--bg-subtle)", color: "var(--text-main)" }}>
-            {isDark ? "☀️" : "🌙"}
+          
+          <div className="wiz-stepper">
+            {[
+              { id: 0, nome: "Processo e Sessão", desc: "Dados básicos" },
+              { id: 1, nome: "Objeto e Equipe", desc: "Detalhes e responsáveis" },
+              { id: 2, nome: "Valores e Anexos", desc: "Vigência e documentos" }
+            ].map((step, idx) => (
+              <React.Fragment key={step.id}>
+                <div className={`wiz-step-item ${etapaAtual === step.id ? 'active' : etapaAtual > step.id ? 'done' : 'pending'}`}>
+                  <div className="wiz-step-content">
+                    <div className="wiz-step-bubble">{etapaAtual > step.id ? "✓" : step.id + 1}</div>
+                    <div className="wiz-step-labels">
+                      <div className="wiz-step-name">{step.nome}</div>
+                      <div className="wiz-step-desc">{step.desc}</div>
+                    </div>
+                  </div>
+                </div>
+                {idx < 2 && <div className={`wiz-step-connector ${etapaAtual > step.id ? 'done' : ''}`} />}
+              </React.Fragment>
+            ))}
+          </div>
+
+          <button onClick={toggleTheme} className="wiz-btn-ghost" style={{ padding: "8px", borderRadius: "8px" }}>
+            {theme === "dark" ? "☀️" : "🌙"}
           </button>
         </div>
       </div>
 
-      <div style={{ flex: 1, padding: "0 40px", overflow: "hidden" }}>
-        <div style={{ height: "100%", background: "var(--bg-panel)", borderRadius: "24px", boxShadow: "var(--shadow-md)", border: "1px solid var(--border)", padding: "16px" }}>
-          <div ref={scrollRef} style={{ height: "100%", overflowY: "auto", padding: "16px" }}>
-            {renderizarEtapa()}
-          </div>
-        </div>
+      <div className="wiz-body" ref={scrollRef}>
+        {renderizarEtapa()}
       </div>
-      <div style={{ padding: "24px 40px", display: "flex", justifyContent: "space-between" }}>
-        <button onClick={voltar} disabled={etapaAtual === 0} style={{ width: "140px", height: "44px", borderRadius: "12px", border: "2px solid var(--border)", background: "transparent", color: "var(--text-main)", fontWeight: "bold", fontSize: "14px", cursor: etapaAtual === 0 ? "not-allowed" : "pointer", opacity: etapaAtual === 0 ? 0.5 : 1 }}>Voltar</button>
-        <button onClick={avancar} disabled={!podeAvancar} style={{ width: "140px", height: "44px", borderRadius: "12px", border: "none", background: !podeAvancar ? "var(--text-light)" : (etapaAtual === 2 ? "var(--btn-success)" : "var(--btn-primary)"), color: "#ffffff", fontWeight: "bold", fontSize: "14px", cursor: !podeAvancar ? "not-allowed" : "pointer" }}>{etapaAtual === 2 ? "Gerar Edital" : "Avançar"}</button>
+
+      <div className="wiz-footer">
+        <div className="wiz-footer-left">
+          <div className="wiz-step-label-footer">Passo {etapaAtual + 1} de 3</div>
+          <div className="wiz-step-hint">Preencha os campos obrigatórios (*) para avançar</div>
+        </div>
+        <div className="wiz-footer-right">
+          <button className="wiz-btn wiz-btn-ghost" onClick={voltar} disabled={etapaAtual === 0}>
+            Voltar
+          </button>
+          <button
+            className={`wiz-btn ${etapaAtual === 2 && podeAvancar ? "" : "wiz-btn-primary"}`}
+            onClick={avancar}
+            disabled={!podeAvancar}
+            style={
+              etapaAtual === 2
+                ? {
+                    background: podeAvancar ? "var(--wiz-success)" : "rgba(22, 163, 74, 0.4)",
+                    color: podeAvancar ? "#ffffff" : "rgba(255, 255, 255, 0.7)",
+                    cursor: !podeAvancar ? "not-allowed" : "pointer",
+                    pointerEvents: "auto"
+                  }
+                : {
+                    cursor: !podeAvancar ? "not-allowed" : "pointer",
+                    pointerEvents: "auto"
+                  }
+            }
+          >
+            {etapaAtual === 2 ? "Gerar Edital" : "Avançar"}
+          </button>
+        </div>
       </div>
     </div>
   );
