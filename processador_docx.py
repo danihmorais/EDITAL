@@ -122,30 +122,54 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
             texto_limpo = re.sub(r'\s+', ' ', "".join(child.itertext()).strip().upper())
             
             if "MINUTA DA ATA DE REGISTRO DE PREÇOS" in texto_limpo or "MINUTA DE ATA DE REGISTRO DE PREÇOS" in texto_limpo:
-                if "...." not in texto_limpo and not re.search(r'\d+$', texto_limpo):
+                if "...." not in texto_limpo and not re.search(r'\d+$', texto_limpo) and len(texto_limpo) < 200:
                     idx_corte = i
                     break
         
         if idx_corte != -1:
-            while idx_corte > 0:
-                prev_child = elementos_body[idx_corte - 1]
-                t_prev = re.sub(r'\s+', ' ', "".join(prev_child.itertext()).strip().upper())
-                
+            temp_idx = idx_corte
+            limite_busca = max(0, idx_corte - 30)
+            for j in range(idx_corte - 1, limite_busca - 1, -1):
+                el = elementos_body[j]
+                txt = re.sub(r'\s+', ' ', "".join(el.itertext()).strip().upper())
                 try:
-                    prev_xml = etree.tostring(prev_child, encoding='unicode').upper()
+                    xml_str = etree.tostring(el, encoding='unicode').upper()
                 except Exception:
-                    prev_xml = ""
+                    xml_str = ""
                 
-                if t_prev.startswith("ANEXO") and len(t_prev) < 60:
-                    idx_corte -= 1
-                elif not t_prev.strip():
-                    idx_corte -= 1
-                elif "PAGE" in prev_xml and not t_prev.strip():
+                is_page_break = ('TYPE="PAGE"' in xml_str.replace(" ", "") or 
+                                 "PAGEBREAKBEFORE" in xml_str.replace(" ", "") or 
+                                 "BREAK" in xml_str)
+                
+                if is_page_break:
+                    temp_idx = j
+                    break
+                if txt.startswith("ANEXO") and len(txt) < 80:
+                    temp_idx = j
+
+            idx_corte = temp_idx
+            
+            while idx_corte > 0:
+                el = elementos_body[idx_corte - 1]
+                txt = "".join(el.itertext()).strip()
+                try:
+                    xml_str = etree.tostring(el, encoding='unicode').upper()
+                except Exception:
+                    xml_str = ""
+                
+                is_page_break = ('TYPE="PAGE"' in xml_str.replace(" ", "") or 
+                                 "PAGEBREAKBEFORE" in xml_str.replace(" ", "") or 
+                                 "BREAK" in xml_str)
+                
+                if not txt or is_page_break:
                     idx_corte -= 1
                 else:
                     break
-                    
+
+            ultimo_elemento = elementos_body[-1] if elementos_body else None
             for el in elementos_body[idx_corte:]:
+                if el == ultimo_elemento and el.tag.endswith('sectPr'):
+                    continue
                 try:
                     el.getparent().remove(el)
                 except Exception:
