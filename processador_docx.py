@@ -30,7 +30,13 @@ def remover_paginas_em_branco(caminho_docx: str):
             
             if not texto and not (tem_quebra_hard or tem_quebra_api or tem_quebra_format):
                 try:
-                    el.getparent().remove(el)
+                    parent = el.getparent()
+                    if parent is not None:
+                        ps = parent.findall(qn('w:p'))
+                        if len(ps) > 1:
+                            parent.remove(el)
+                        else:
+                            break
                 except Exception:
                     pass
             else:
@@ -76,14 +82,35 @@ def remover_paginas_em_branco(caminho_docx: str):
             
     doc.save(caminho_docx)
 
-def _remover_ultimo_sectpr(doc):
-    sect_prs = doc.element.body.xpath('.//w:sectPr')
-    if sect_prs:
-        ultimo = sect_prs[-1]
-        try:
-            ultimo.getparent().remove(ultimo)
-        except Exception:
-            pass
+def _remover_ultimo_sectpr(caminho_docx):
+    try:
+        with zipfile.ZipFile(caminho_docx, 'r') as zin:
+            conteudos = {n: zin.read(n) for n in zin.namelist()}
+
+        if 'word/document.xml' not in conteudos:
+            return
+
+        tree = etree.fromstring(conteudos['word/document.xml'])
+        
+        sect_prs_in_p = tree.findall(f'.//{qn("w:pPr")}/{qn("w:sectPr")}')
+        if sect_prs_in_p:
+            ultimo_sect_pr = sect_prs_in_p[-1]
+            ultimo_sect_pr.getparent().remove(ultimo_sect_pr)
+
+            conteudos['word/document.xml'] = etree.tostring(
+                tree, xml_declaration=True, encoding='UTF-8', standalone=True
+            )
+
+            fd, temp_path = tempfile.mkstemp(suffix='.docx')
+            os.close(fd)
+            with zipfile.ZipFile(temp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
+                for nome, conteudo in conteudos.items():
+                    zout.writestr(nome, conteudo)
+
+            shutil.move(temp_path, caminho_docx)
+
+    except Exception:
+        pass
 
 def _to_roman(n):
     try:
@@ -358,6 +385,8 @@ def _mesclar_docx_no_local(doc, paragrafo_alvo, caminho_docx):
         idx = list(parent).index(paragrafo_alvo._element)
         parent.insert(idx, altChunk)
         parent.remove(paragrafo_alvo._element)
+        if len(parent.findall(qn('w:p'))) == 0:
+            parent.append(OxmlElement('w:p'))
 
     if eh_temp:
         try:
@@ -384,7 +413,11 @@ def _remover_secao_arp(doc):
                 xml_str = etree.tostring(p._element, encoding='unicode').upper()
                 if 'TOC' in xml_str or 'PAGEREF' in xml_str or 'HYPERLINK' in xml_str:
                     try:
-                        p._element.getparent().remove(p._element)
+                        parent = p._element.getparent()
+                        if parent is not None:
+                            parent.remove(p._element)
+                            if len(parent.findall(qn('w:p'))) == 0:
+                                parent.append(OxmlElement('w:p'))
                     except Exception:
                         pass
                         
@@ -431,9 +464,14 @@ def _remover_secao_arp(doc):
         if el is ultimo_elemento and el.tag.endswith('sectPr'):
             continue
         try:
-            el.getparent().remove(el)
+            parent = el.getparent()
+            if parent is not None:
+                parent.remove(el)
         except Exception:
             pass
+
+    if len(body.findall(qn('w:p'))) == 0:
+        body.insert(0, OxmlElement('w:p'))
 
 def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) -> str:
     doc = Document(caminho_modelo)
@@ -467,17 +505,13 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                 else:
                     break
                     
-    inseriu_linha_embranco = False
     for p in paragrafos_remover_set:
         try:
             parent = p._element.getparent()
             if parent is not None:
-                idx = list(parent).index(p._element)
                 parent.remove(p._element)
-                if not inseriu_linha_embranco:
-                    novo_p = OxmlElement("w:p")
-                    parent.insert(idx, novo_p)
-                    inseriu_linha_embranco = True
+                if len(parent.findall(qn('w:p'))) == 0:
+                    parent.append(OxmlElement('w:p'))
         except Exception:
             pass
             
@@ -521,17 +555,31 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
                     break
             if remover_esta:
                 colunas_para_remover.append(i)
-        for col_idx in reversed(colunas_para_remover):
-            for row in tabela.rows:
-                try:
-                    tc = row.cells[col_idx]._tc
-                    tc.getparent().remove(tc)
-                except Exception:
-                    pass
-        for linha in tabela.rows:
-            for celula in linha.cells:
-                for paragrafo in list(celula.paragraphs):
-                    _processar_paragrafo(paragrafo, dados, e_arp)
+                
+        if len(colunas_para_remover) == len(tabela.columns) and len(tabela.columns) > 0:
+            try:
+                tbl = tabela._tbl
+                parent = tbl.getparent()
+                if parent is not None:
+                    parent.remove(tbl)
+            except Exception:
+                pass
+        else:
+            for col_idx in reversed(colunas_para_remover):
+                for row in tabela.rows:
+                    try:
+                        tc = row.cells[col_idx]._tc
+                        parent = tc.getparent()
+                        if parent is not None:
+                            parent.remove(tc)
+                    except Exception:
+                        pass
+                        
+        if tabela._tbl.getparent() is not None:
+            for linha in tabela.rows:
+                for celula in linha.cells:
+                    for paragrafo in list(celula.paragraphs):
+                        _processar_paragrafo(paragrafo, dados, e_arp)
                     
     for section in doc.sections:
         for header in [section.header, section.first_page_header, section.even_page_header]:
@@ -570,11 +618,12 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
             if footer:
                 limpar_realce_verde(footer._element)
                 
-    if apenas_contrato:
-        _remover_ultimo_sectpr(doc)
-                
     doc.save(caminho_saida)
     remover_paginas_em_branco(caminho_saida)
+    
+    if apenas_contrato:
+        _remover_ultimo_sectpr(caminho_saida)
+        
     return caminho_saida
 
 def _substituir_texto_mantendo_formatacao(paragrafo, marcador, valor_str):
@@ -738,6 +787,10 @@ def _processar_paragrafo(paragrafo, dados, e_arp):
         if apagou_algo and not p_atual.text.strip():
             try:
                 p_element = p_atual._element
-                p_element.getparent().remove(p_element)
+                parent = p_element.getparent()
+                if parent is not None:
+                    parent.remove(p_element)
+                    if len(parent.findall(qn('w:p'))) == 0:
+                        parent.append(OxmlElement('w:p'))
             except Exception:
                 pass
