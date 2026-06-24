@@ -544,33 +544,38 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
 
     dados = dict(dados)
     tipo_dotacao = dados.get("{{TIPO_DOTACAO}}", "TEXTO")
-    dotacao_b64 = dados.get("{{DOTACAO_BASE64}}", "")
+    dotacao_b64_list = dados.get("{{DOTACAO_BASE64_LIST}}", [])
 
-    if tipo_dotacao == "IMAGEM" and dotacao_b64:
+    if tipo_dotacao == "IMAGEM" and dotacao_b64_list:
         try:
-            image_data = base64.b64decode(dotacao_b64)
-            imagem_stream = BytesIO(image_data)
+            image_streams = []
+            for b64_str in dotacao_b64_list:
+                if b64_str:
+                    image_data = base64.b64decode(b64_str)
+                    image_streams.append(BytesIO(image_data))
             
-            def substituir_dotacao_imagem(p):
-                if "{{DOTACAO}}" in p.text:
-                    _substituir_texto_mantendo_formatacao(p, "{{DOTACAO}}", "")
-                    run = p.add_run()
-                    run.add_picture(imagem_stream, width=Inches(5.5))
-                    imagem_stream.seek(0)
-                    
-            for p in list(doc.paragraphs):
-                substituir_dotacao_imagem(p)
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        for p in list(cell.paragraphs):
-                            substituir_dotacao_imagem(p)
-                            
-            dados["{{DOTACAO}}"] = ""
+            if image_streams:
+                def substituir_dotacao_imagens(p):
+                    if "{{DOTACAO}}" in p.text:
+                        _substituir_texto_mantendo_formatacao(p, "{{DOTACAO}}", "")
+                        run = p.add_run()
+                        for img_stream in image_streams:
+                            run.add_picture(img_stream, width=Inches(5.5))
+                            img_stream.seek(0)
+                
+                for p in list(doc.paragraphs):
+                    substituir_dotacao_imagens(p)
+                for table in doc.tables:
+                    for row in table.rows:
+                        for cell in row.cells:
+                            for p in list(cell.paragraphs):
+                                substituir_dotacao_imagens(p)
+                                
+                dados["{{DOTACAO}}"] = ""
         except Exception as e:
             pass
-            
-    dados.pop("{{DOTACAO_BASE64}}", None)
+
+    dados.pop("{{DOTACAO_BASE64_LIST}}", None)
     dados.pop("{{TIPO_DOTACAO}}", None)
 
     if not e_arp:

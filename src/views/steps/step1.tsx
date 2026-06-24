@@ -28,7 +28,9 @@ export default function Step1({ dados, atualizarDados }: any) {
         </div>
         <div className="wiz-grid-2">
           <div className="wiz-field">
-            <label className="wiz-label">Número do Processo</label>
+            <label className="wiz-label">
+              Número do Processo <span className="req-star">*</span>
+            </label>
             <input
               type="text"
               className="wiz-input"
@@ -38,7 +40,9 @@ export default function Step1({ dados, atualizarDados }: any) {
             />
           </div>
           <div className="wiz-field">
-            <label className="wiz-label">Número do Edital</label>
+            <label className="wiz-label">
+              Número do Edital <span className="req-star">*</span>
+            </label>
             <input
               type="text"
               className="wiz-input"

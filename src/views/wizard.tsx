@@ -72,7 +72,7 @@ export default function Wizard() {
   const validarEtapa = () => {
     switch (etapaAtual) {
       case 0:
-        return !!(dados.modalidade && dados.criterios && dados.instrumento && dados.dataRecProp1 && dados.dataSessao && dados.horaSessao && dados.dataEdital);
+        return !!(dados.numeroProcesso && dados.numeroModalidade && dados.modalidade && dados.criterios && dados.instrumento && dados.dataRecProp1 && dados.dataSessao && dados.horaSessao && dados.dataEdital);
       case 1:
         const hasG = dados.gestores && dados.gestores.length > 0 && dados.gestores[0].nome.trim() && dados.gestores[0].cargo.trim();
         const hasF = dados.fiscais && dados.fiscais.length > 0 && dados.fiscais[0].nome.trim() && dados.fiscais[0].cargo.trim();
@@ -105,7 +105,6 @@ export default function Wizard() {
     setStatusTexto("A compilar o Edital...");
 
     try {
-      // O AWAIT AQUI RESOLVE O ERRO DE "missing required key dadosUsuario"
       const { dadosMapeados, arquivoBase } = await mapearDadosWizard(dados);
 
       await invoke("gerar_documentos", {
@@ -170,8 +169,8 @@ export default function Wizard() {
             <>
               <h2 style={{ margin: "0 0 16px 0", color: "var(--wiz-text)", fontSize: "24px" }}>Gerando Edital</h2>
               <p style={{ color: "var(--wiz-text-3)", margin: "0 0 24px 0" }}>{statusTexto}</p>
-              <div style={{ width: "100%", height: "6px", background: "var(--wiz-border)", borderRadius: "4px", overflow: "hidden" }}>
-                <div style={{ width: "50%", height: "100%", background: "var(--wiz-accent)", transition: "width 0.3s", animation: "progress 2s infinite" }} />
+              <div style={{ position: "relative", width: "100%", height: "6px", background: "var(--wiz-border)", borderRadius: "4px", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: 0, left: 0, width: "40%", height: "100%", background: "var(--wiz-accent)", animation: "progress 1.5s ease-in-out infinite" }} />
               </div>
             </>
           )}
