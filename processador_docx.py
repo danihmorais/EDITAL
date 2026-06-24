@@ -2,6 +2,9 @@ import os
 import re
 import copy
 import uuid
+import shutil
+import tempfile
+import zipfile
 from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -17,13 +20,6 @@ def remover_paginas_em_branco(caminho_docx: str):
     
     for el in reversed(elementos):
         if el.tag.endswith('sectPr'):
-            type_el = el.xpath('.//w:type')
-            if type_el:
-                type_el[0].set(qn('w:val'), 'continuous')
-            else:
-                new_type = OxmlElement('w:type')
-                new_type.set(qn('w:val'), 'continuous')
-                el.append(new_type)
             continue
         if el.tag.endswith('p'):
             texto = "".join(el.itertext()).strip()
@@ -46,17 +42,6 @@ def remover_paginas_em_branco(caminho_docx: str):
             texto = "".join(el.itertext()).strip()
             tem_quebra = bool(el.xpath('.//w:br[@w:type="page"]'))
             
-            sectPrs = el.xpath('.//w:pPr/w:sectPr')
-            if sectPrs and not texto:
-                for sectPr in sectPrs:
-                    type_el = sectPr.xpath('.//w:type')
-                    if type_el:
-                        type_el[0].set(qn('w:val'), 'continuous')
-                    else:
-                        new_type = OxmlElement('w:type')
-                        new_type.set(qn('w:val'), 'continuous')
-                        sectPr.append(new_type)
-            
             if tem_quebra:
                 if ultimo_foi_quebra and not texto:
                     para_remover = el.xpath('.//w:br[@w:type="page"]')
@@ -73,12 +58,250 @@ def remover_paginas_em_branco(caminho_docx: str):
             
     doc.save(caminho_docx)
 
-def _mesclar_docx_no_local(doc, paragrafo_alvo, caminho_docx):
+def _to_roman(n):
     try:
-        with open(caminho_docx, 'rb') as f:
+        n = int(n)
+    except Exception:
+        return "1"
+    if n <= 0 or n >= 4000:
+        return str(n)
+    val = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]
+    syb = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"]
+    roman_num = ""
+    i = 0
+    while n > 0:
+        for _ in range(n // val[i]):
+            roman_num += syb[i]
+            n -= val[i]
+        i += 1
+    return roman_num
+
+def _format_number(val, fmt):
+    if fmt == 'decimal':
+        return str(val)
+    if fmt == 'lowerLetter':
+        return chr(97 + (val - 1) % 26) if val > 0 else str(val)
+    if fmt == 'upperLetter':
+        return chr(65 + (val - 1) % 26) if val > 0 else str(val)
+    if fmt == 'lowerRoman':
+        return _to_roman(val).lower()
+    if fmt == 'upperRoman':
+        return _to_roman(val).upper()
+    if fmt == 'decimalZero':
+        return f"{val:02d}"
+    if fmt == 'ordinal':
+        return f"{val}º"
+    if fmt in ('bullet', 'none'):
+        return ""
+    return str(val)
+
+def _converter_listas_para_texto(caminho_docx):
+    try:
+        with zipfile.ZipFile(caminho_docx, 'r') as zin:
+            nomes = zin.namelist()
+            conteudos = {n: zin.read(n) for n in nomes}
+    except Exception:
+        return caminho_docx, False
+
+    if 'word/numbering.xml' not in conteudos:
+        return caminho_docx, False
+
+    try:
+        if 'word/styles.xml' in conteudos:
+            styles_tree = etree.fromstring(conteudos['word/styles.xml'])
+            modificado_styles = False
+            for style in styles_tree.findall(qn('w:style')):
+                numPrs = style.findall(f".//{qn('w:numPr')}")
+                for numPr in numPrs:
+                    numPr.getparent().remove(numPr)
+                    modificado_styles = True
+                numStyleLinks = style.findall(f".//{qn('w:numStyleLink')}")
+                for numStyleLink in numStyleLinks:
+                    numStyleLink.getparent().remove(numStyleLink)
+                    modificado_styles = True
+            if modificado_styles:
+                conteudos['word/styles.xml'] = etree.tostring(styles_tree, xml_declaration=True, encoding='UTF-8', standalone=True)
+
+        num_tree = etree.fromstring(conteudos['word/numbering.xml'])
+        abstract_nums = {}
+        for abs_num in num_tree.findall(qn('w:abstractNum')):
+            abs_id = abs_num.get(qn('w:abstractNumId'))
+            abstract_nums[abs_id] = {}
+            for lvl in abs_num.findall(qn('w:lvl')):
+                ilvl = int(lvl.get(qn('w:ilvl'), '0'))
+                start_el = lvl.find(qn('w:start'))
+                numFmt_el = lvl.find(qn('w:numFmt'))
+                lvlText_el = lvl.find(qn('w:lvlText'))
+                lvl_pPr = lvl.find(qn('w:pPr'))
+                lvl_rPr = lvl.find(qn('w:rPr'))
+                abstract_nums[abs_id][ilvl] = {
+                    'start': int(start_el.get(qn('w:val'), '1')) if start_el is not None else 1,
+                    'fmt': numFmt_el.get(qn('w:val')) if numFmt_el is not None else 'decimal',
+                    'text': lvlText_el.get(qn('w:val')) if lvlText_el is not None else '',
+                    'pPr': copy.deepcopy(lvl_pPr) if lvl_pPr is not None else None,
+                    'rPr': copy.deepcopy(lvl_rPr) if lvl_rPr is not None else None,
+                }
+
+        nums = {}
+        for num in num_tree.findall(qn('w:num')):
+            num_id = num.get(qn('w:numId'))
+            abs_ref = num.find(qn('w:abstractNumId'))
+            abs_val = abs_ref.get(qn('w:val')) if abs_ref is not None else '0'
+            nums[num_id] = {'abstractNumId': abs_val, 'overrides': {}}
+            for lvl_override in num.findall(qn('w:lvlOverride')):
+                ilvl = int(lvl_override.get(qn('w:ilvl'), '0'))
+                start_ov = lvl_override.find(qn('w:startOverride'))
+                if start_ov is not None:
+                    nums[num_id]['overrides'][ilvl] = int(start_ov.get(qn('w:val'), '1'))
+
+        style_num_map = {}
+        if 'word/styles.xml' in conteudos:
+            for style in styles_tree.findall(qn('w:style')):
+                style_id = style.get(qn('w:styleId'))
+                numPr = style.find(f".//{qn('w:numPr')}")
+                if numPr is not None:
+                    numId_el = numPr.find(qn('w:numId'))
+                    ilvl_el = numPr.find(qn('w:ilvl'))
+                    if numId_el is not None:
+                        nId = numId_el.get(qn('w:val'))
+                        ilvl = int(ilvl_el.get(qn('w:val'), '0')) if ilvl_el is not None else 0
+                        style_num_map[style_id] = (nId, ilvl)
+
+        xml_targets = [
+            n for n in conteudos
+            if n.startswith('word/') and n.endswith('.xml')
+            and n not in ('word/numbering.xml', 'word/styles.xml',
+                          'word/settings.xml', 'word/fontTable.xml', 'word/webSettings.xml')
+        ]
+
+        for target in xml_targets:
+            try:
+                tree = etree.fromstring(conteudos[target])
+                counters = {}
+                modificado = False
+                for p in tree.iter(qn('w:p')):
+                    nId = None
+                    ilvl = 0
+                    from_style = False
+                    
+                    numPr = p.find(f".//{qn('w:numPr')}")
+                    if numPr is not None:
+                        numId_el = numPr.find(qn('w:numId'))
+                        ilvl_el = numPr.find(qn('w:ilvl'))
+                        if numId_el is not None:
+                            nId = numId_el.get(qn('w:val'))
+                            if nId == '0':
+                                nId = None
+                            else:
+                                ilvl = int(ilvl_el.get(qn('w:val'), '0')) if ilvl_el is not None else 0
+                    else:
+                        pStyle = p.find(f".//{qn('w:pStyle')}")
+                        if pStyle is not None:
+                            style_id = pStyle.get(qn('w:val'))
+                            if style_id in style_num_map:
+                                nId, ilvl = style_num_map[style_id]
+                                from_style = True
+
+                    if nId and nId in nums:
+                        abs_id = nums[nId]['abstractNumId']
+                        if abs_id in abstract_nums and ilvl in abstract_nums[abs_id]:
+                            lvl_info = abstract_nums[abs_id][ilvl]
+                            
+                            if nId not in counters:
+                                counters[nId] = {}
+                                
+                            if ilvl not in counters[nId]:
+                                start_val = nums[nId]['overrides'].get(ilvl, lvl_info['start'])
+                                counters[nId][ilvl] = start_val
+                            else:
+                                counters[nId][ilvl] += 1
+                                
+                            for l in list(counters[nId].keys()):
+                                if l > ilvl:
+                                    del counters[nId][l]
+                                    
+                            text_format = lvl_info['text']
+                            for level in range(9):
+                                placeholder = f"%{level+1}"
+                                if placeholder in text_format:
+                                    val = counters[nId].get(level, abstract_nums[abs_id].get(level, {}).get('start', 1))
+                                    fmt = abstract_nums[abs_id].get(level, {}).get('fmt', 'decimal')
+                                    text_format = text_format.replace(placeholder, _format_number(val, fmt))
+                                    
+                            run = OxmlElement('w:r')
+                            t = OxmlElement('w:t')
+                            t.text = text_format + " "
+                            t.set(qn('xml:space'), 'preserve')
+                            run.append(t)
+                            
+                            lvl_rPr = lvl_info.get('rPr')
+                            if lvl_rPr is not None:
+                                run.insert(0, copy.deepcopy(lvl_rPr))
+                            else:
+                                primeiro_run = p.find(qn('w:r'))
+                                if primeiro_run is not None:
+                                    rPr_primeiro = primeiro_run.find(qn('w:rPr'))
+                                    if rPr_primeiro is not None:
+                                        run.insert(0, copy.deepcopy(rPr_primeiro))
+                                        
+                            pPr = p.find(qn('w:pPr'))
+                            if pPr is None:
+                                pPr = OxmlElement('w:pPr')
+                                p.insert(0, pPr)
+                            else:
+                                for el_remover in pPr.findall(qn('w:numPr')):
+                                    el_remover.getparent().remove(el_remover)
+                                    
+                            lvl_pPr = lvl_info.get('pPr')
+                            if lvl_pPr is not None:
+                                lvl_ind = lvl_pPr.find(qn('w:ind'))
+                                if lvl_ind is not None and pPr.find(qn('w:ind')) is None:
+                                    pPr.append(copy.deepcopy(lvl_ind))
+                                    
+                            p.insert(list(p).index(pPr) + 1, run)
+                            
+                            if from_style:
+                                new_numPr = OxmlElement('w:numPr')
+                                new_numId = OxmlElement('w:numId')
+                                new_numId.set(qn('w:val'), '0')
+                                new_numPr.append(new_numId)
+                                pPr.append(new_numPr)
+                                
+                            modificado = True
+
+                if modificado:
+                    conteudos[target] = etree.tostring(
+                        tree, xml_declaration=True, encoding='UTF-8', standalone=True
+                    )
+            except Exception:
+                pass
+
+        conteudos['word/numbering.xml'] = b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"></w:numbering>'
+
+        fd, temp_path = tempfile.mkstemp(suffix='.docx')
+        os.close(fd)
+        with zipfile.ZipFile(temp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
+            for nome, conteudo in conteudos.items():
+                zout.writestr(nome, conteudo)
+
+        return temp_path, True
+
+    except Exception:
+        return caminho_docx, False
+
+def _mesclar_docx_no_local(doc, paragrafo_alvo, caminho_docx):
+    arquivo_importar, eh_temp = _converter_listas_para_texto(caminho_docx)
+
+    try:
+        with open(arquivo_importar, 'rb') as f:
             docx_bytes = f.read()
     except Exception as e:
         _substituir_texto_mantendo_formatacao(paragrafo_alvo, paragrafo_alvo.text, f"[ERRO AO LER DOCX: {e}]")
+        if eh_temp:
+            try:
+                os.unlink(arquivo_importar)
+            except Exception:
+                pass
         return
 
     part = doc.part
@@ -108,6 +331,12 @@ def _mesclar_docx_no_local(doc, paragrafo_alvo, caminho_docx):
         idx = list(parent).index(paragrafo_alvo._element)
         parent.insert(idx, altChunk)
         parent.remove(paragrafo_alvo._element)
+
+    if eh_temp:
+        try:
+            os.unlink(arquivo_importar)
+        except Exception:
+            pass
 
 def _remover_secao_arp(doc):
     body = doc.element.body
