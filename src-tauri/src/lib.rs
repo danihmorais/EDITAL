@@ -154,7 +154,8 @@ fn abrir_link(app: AppHandle, url: String) -> Result<(), String> {
 #[tauri::command]
 async fn aplicar_atualizacao(url: String) -> Result<(), String> {
     let temp_dir = std::env::temp_dir();
-    let exe_path = temp_dir.join("monta_edital_update.exe");
+    let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+    let exe_path = temp_dir.join(format!("monta_edital_update_{}.exe", timestamp));
     let client = reqwest::Client::new();
     
     let response = client.get(&url)
@@ -170,8 +171,27 @@ async fn aplicar_atualizacao(url: String) -> Result<(), String> {
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
     let mut file = std::fs::File::create(&exe_path).map_err(|e| e.to_string())?;
     std::io::Write::write_all(&mut file, &bytes).map_err(|e| e.to_string())?;
+    
+    drop(file);
 
-    std::process::Command::new(exe_path).spawn().map_err(|e| e.to_string())?;
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("powershell")
+            .args([
+                "-NoProfile",
+                "-WindowStyle", "Hidden",
+                "-Command",
+                &format!("Start-Process -FilePath '{}'", exe_path.display())
+            ])
+            .spawn()
+            .map_err(|e| format!("Falha ao solicitar elevação: {}", e))?;
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        std::process::Command::new(exe_path).spawn().map_err(|e| e.to_string())?;
+    }
+
     std::process::exit(0);
 }
 

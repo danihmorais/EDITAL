@@ -7,22 +7,41 @@ export async function verificarAtualizacao(
   setAguardandoUpdate: (estado: boolean) => void
 ) {
   try {
-    const res = await fetch(REPO_URL);
+    let currentVersion;
+    try {
+      currentVersion = await getVersion();
+    } catch (err) {
+      throw new Error(`Permissão negada ou erro em getVersion(): ${err}`);
+    }
+
+    let res;
+    try {
+      res = await fetch(REPO_URL);
+    } catch (err) {
+      throw new Error(`Falha de rede (Bloqueio de Firewall/Antivírus ou CORS): ${err}`);
+    }
 
     if (!res.ok) {
-      alert("Não foi possível verificar atualizações.");
+      alert(`Falha na API do GitHub. Status HTTP: ${res.status}`);
       return;
     }
 
     const data = await res.json();
 
+    if (!data || !data.tag_name) {
+      throw new Error("Resposta inválida do GitHub (tag_name ausente).");
+    }
+
     const latestTag = data.tag_name;
-    const currentVersion = await getVersion();
     const cleanTag = latestTag.replace("v", "");
 
     if (cleanTag === currentVersion) {
       alert(`Você já está na versão mais recente (${currentVersion}).`);
       return;
+    }
+
+    if (!data.assets || !Array.isArray(data.assets)) {
+      throw new Error("Resposta inválida do GitHub (assets ausentes).");
     }
 
     const asset = data.assets.find((a: any) =>
@@ -44,12 +63,17 @@ export async function verificarAtualizacao(
 
     setAguardandoUpdate(true);
 
-    await invoke("aplicar_atualizacao", {
-      url: asset.browser_download_url,
-    });
+    try {
+      await invoke("aplicar_atualizacao", {
+        url: asset.browser_download_url,
+      });
+    } catch (err) {
+      throw new Error(`Erro no comando aplicar_atualizacao do backend: ${err}`);
+    }
   } catch (error) {
-    console.error("Erro ao verificar atualização:", error);
-    alert("Erro ao verificar atualização.\nVerifique sua conexão ou o repositório.");
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Erro detalhado:", error);
+    alert(`Erro: ${errorMessage}`);
     setAguardandoUpdate(false);
   }
 }
