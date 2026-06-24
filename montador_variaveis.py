@@ -401,8 +401,10 @@ def montar_variaveis_fixas(dados_usuario: dict) -> dict:
     if valor_raw:
         valor_float = _limpar_valor_numerico(valor_raw)
         if valor_float > 0:
-            resultado["{{VALOR}}"] = _formatar_valor(valor_float)
-            resultado["{{VALOR EXT}}"] = _valor_por_extenso(valor_float)
+            str_val = _formatar_valor(valor_float)
+            str_ext = _valor_por_extenso(valor_float)
+            resultado["{{VALOR}}"] = f"R$ {str_val} ({str_ext})"
+            resultado["{{VALOR EXT}}"] = str_ext
         else:
             resultado["{{VALOR}}"] = str(valor_raw)
             resultado["{{VALOR EXT}}"] = ""

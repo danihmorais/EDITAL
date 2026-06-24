@@ -5,9 +5,13 @@ import io
 from processador_docx import preencher_documento
 from montador_variaveis import montar_variaveis_fixas
 
-if sys.platform == "win32" and sys.stdout is not None:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+if sys.platform == "win32":
+    if sys.stdout is not None:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    if sys.stderr is not None:
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    if sys.stdin is not None:
+        sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
 
 MODELOS_DISPONIVEIS = {
     "dispensa": "modelos/Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx",

@@ -22,9 +22,13 @@ def remover_paginas_em_branco(caminho_docx: str):
         if el.tag.endswith('sectPr'):
             continue
         if el.tag.endswith('p'):
-            texto = "".join(el.itertext()).strip()
-            tem_quebra = bool(el.xpath('.//w:br[@w:type="page"]') or el.xpath('.//w:lastRenderedPageBreak'))
-            if not texto and not tem_quebra:
+            p = Paragraph(el, doc._body)
+            texto = p.text.strip()
+            tem_quebra_hard = bool(el.xpath('.//w:br[@w:type="page"]'))
+            tem_quebra_api = getattr(p, 'contains_page_break', False)
+            tem_quebra_format = bool(p.paragraph_format and p.paragraph_format.page_break_before)
+            
+            if not texto and not (tem_quebra_hard or tem_quebra_api or tem_quebra_format):
                 try:
                     el.getparent().remove(el)
                 except Exception:
@@ -39,17 +43,31 @@ def remover_paginas_em_branco(caminho_docx: str):
     
     for el in elementos:
         if el.tag.endswith('p'):
-            texto = "".join(el.itertext()).strip()
-            tem_quebra = bool(el.xpath('.//w:br[@w:type="page"]'))
+            p = Paragraph(el, doc._body)
+            texto = p.text.strip()
+            tem_quebra_hard_els = el.xpath('.//w:br[@w:type="page"]')
+            tem_quebra_api = getattr(p, 'contains_page_break', False)
+            tem_quebra_format = bool(p.paragraph_format and p.paragraph_format.page_break_before)
             
-            if tem_quebra:
+            tem_quebra_atual = bool(tem_quebra_hard_els) or tem_quebra_api or tem_quebra_format
+            
+            if tem_quebra_atual:
                 if ultimo_foi_quebra and not texto:
-                    para_remover = el.xpath('.//w:br[@w:type="page"]')
-                    for br in para_remover:
+                    for br in tem_quebra_hard_els:
                         try:
                             br.getparent().remove(br)
                         except Exception:
                             pass
+                    
+                    if tem_quebra_format and p.paragraph_format:
+                        p.paragraph_format.page_break_before = False
+                        
+                    if tem_quebra_api or getattr(p, 'rendered_page_breaks', []):
+                        for rpb in el.xpath('.//w:lastRenderedPageBreak'):
+                            try:
+                                rpb.getparent().remove(rpb)
+                            except Exception:
+                                pass
                 ultimo_foi_quebra = True
             elif texto:
                 ultimo_foi_quebra = False
@@ -57,6 +75,15 @@ def remover_paginas_em_branco(caminho_docx: str):
             ultimo_foi_quebra = False
             
     doc.save(caminho_docx)
+
+def _remover_ultimo_sectpr(doc):
+    sect_prs = doc.element.body.xpath('.//w:sectPr')
+    if sect_prs:
+        ultimo = sect_prs[-1]
+        try:
+            ultimo.getparent().remove(ultimo)
+        except Exception:
+            pass
 
 def _to_roman(n):
     try:
@@ -413,6 +440,7 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
     e_arp = dados.get("E_ARP", False)
     remover_amostra = dados.get("__REMOVER_AMOSTRA__", False)
     remover_vistoria = dados.get("__REMOVER_VISTORIA__", False)
+    apenas_contrato = dados.get("APENAS_CONTRATO", False) or dados.get("__APENAS_CONTRATO__", False)
     paragrafos_remover_set = set()
     
     for i, p in enumerate(doc.paragraphs):
@@ -541,6 +569,9 @@ def preencher_documento(caminho_modelo: str, caminho_saida: str, dados: dict) ->
         for footer in [section.footer, section.first_page_footer, section.even_page_footer]:
             if footer:
                 limpar_realce_verde(footer._element)
+                
+    if apenas_contrato:
+        _remover_ultimo_sectpr(doc)
                 
     doc.save(caminho_saida)
     remover_paginas_em_branco(caminho_saida)
@@ -681,7 +712,7 @@ def _processar_paragrafo(paragrafo, dados, e_arp):
                     
     paragrafos_para_processar = [paragrafo]
     for chave, valor in dados.items():
-        if chave in ["E_ARP", "__REMOVER_AMOSTRA__", "__REMOVER_VISTORIA__"]:
+        if chave in ["E_ARP", "__REMOVER_AMOSTRA__", "__REMOVER_VISTORIA__", "APENAS_CONTRATO", "__APENAS_CONTRATO__"]:
             continue
         marcador = chave if chave.startswith("{{") and chave.endswith("}}") else f"{{{{{chave}}}}}"
         if isinstance(valor, list):

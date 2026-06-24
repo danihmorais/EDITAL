@@ -56,14 +56,13 @@ export default function Step3({ dados, atualizarDados }: any) {
               Valor Estimado <span className="req-star">*</span>
             </label>
             <div className="wiz-prefix-wrap">
-              <span className="wiz-prefix">R$</span>
               <input
                 type="text"
                 className="wiz-input"
-                style={{ paddingLeft: "36px" }}
+                style={{ paddingLeft: "12px" }}
                 value={dados.valor || ""}
                 onChange={handleValorChange}
-                placeholder="0,00"
+                placeholder="R$ 0,00"
               />
             </div>
           </div>

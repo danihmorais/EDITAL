@@ -28,7 +28,8 @@ function PessoaList({ label, singularLabel, items, onChange }: PessoaListProps) 
   return (
     <div style={{ marginTop: "24px" }}>
       <div className="wiz-subsection-title">
-        {label} <span className="req-star">*</span>
+        <span>{label}</span>
+        <span className="req-star"> *</span>
       </div>
       <div className="wiz-person-list">
         {items.map((pessoa, i) => (
@@ -154,7 +155,11 @@ export default function Step2({ dados, atualizarDados }: any) {
             accept="image/*"
             onChange={(e) => {
               const files = Array.from(e.target.files || []);
-              atualizarDados({ dotacaoImagens: files });
+              if (files.length > 0 && !dados.dotacao) {
+                atualizarDados({ dotacaoImagens: files, dotacao: "Ver imagem em anexo" });
+              } else {
+                atualizarDados({ dotacaoImagens: files });
+              }
             }}
           />
           {dados.dotacaoImagens && dados.dotacaoImagens.length > 0 && (
