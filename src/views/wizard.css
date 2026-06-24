@@ -282,7 +282,8 @@ body.dark {
   gap: 6px;
 }
 
-.wiz-label .req-star {
+.wiz-label .req-star,
+.wiz-subsection-title .req-star {
   color: var(--wiz-error);
   font-size: 13px;
   line-height: 1;

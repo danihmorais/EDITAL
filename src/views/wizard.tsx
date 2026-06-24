@@ -105,7 +105,8 @@ export default function Wizard() {
     setStatusTexto("A compilar o Edital...");
 
     try {
-      const { dadosMapeados, arquivoBase } = mapearDadosWizard(dados);
+      // O AWAIT AQUI RESOLVE O ERRO DE "missing required key dadosUsuario"
+      const { dadosMapeados, arquivoBase } = await mapearDadosWizard(dados);
 
       await invoke("gerar_documentos", {
         dadosUsuario: dadosMapeados,

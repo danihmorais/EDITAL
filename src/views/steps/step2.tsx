@@ -137,34 +137,68 @@ export default function Step2({ dados, atualizarDados }: any) {
           />
         </div>
 
-        <div className="wiz-field">
+        <div className="wiz-field" style={{ marginBottom: "16px" }}>
           <label className="wiz-label">
             Dotação Orçamentária <span className="req-star">*</span>
           </label>
-          <textarea
-            className="wiz-textarea"
-            style={{ minHeight: "70px", marginBottom: "8px" }}
-            value={dados.dotacao || ""}
-            onChange={(e) => atualizarDados({ dotacao: e.target.value })}
-            placeholder="Descreva a dotação orçamentária ou cole as informações de texto..."
-          />
-          <input
-            type="file"
-            className="wiz-input"
-            multiple
-            accept="image/*"
-            onChange={(e) => {
-              const files = Array.from(e.target.files || []);
-              if (files.length > 0 && !dados.dotacao) {
-                atualizarDados({ dotacaoImagens: files, dotacao: "Ver imagem em anexo" });
-              } else {
-                atualizarDados({ dotacaoImagens: files });
-              }
-            }}
-          />
-          {dados.dotacaoImagens && dados.dotacaoImagens.length > 0 && (
-            <div style={{ marginTop: "6px", fontSize: "12px", color: "var(--wiz-accent)", fontWeight: 600 }}>
-              {dados.dotacaoImagens.length} imagem(ns) selecionada(s).
+          {dados.dotacaoImagens && dados.dotacaoImagens.length > 0 ? (
+            <div className="wiz-upload-area has-file" style={{ justifyContent: "space-between" }}>
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <div className="wiz-upload-icon">🖼️</div>
+                <div className="wiz-upload-text">
+                  <div className="wiz-upload-label">Imagem em Anexo</div>
+                  <div className="wiz-upload-file">{dados.dotacaoImagens.length} arquivo(s) selecionado(s)</div>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="wiz-btn-remove" 
+                onClick={() => atualizarDados({ dotacaoImagens: null, dotacao: "" })}
+                title="Remover imagem"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <div style={{ position: "relative" }}>
+              <textarea
+                className="wiz-textarea"
+                style={{ minHeight: "90px", paddingBottom: "40px" }}
+                value={dados.dotacao || ""}
+                onChange={(e) => atualizarDados({ dotacao: e.target.value })}
+                placeholder="Descreva a dotação ou anexe uma imagem..."
+              />
+              <div style={{ position: "absolute", bottom: "8px", left: "8px" }}>
+                <label 
+                  className="wiz-btn-ghost" 
+                  style={{ 
+                    padding: "4px 10px", 
+                    fontSize: "12px", 
+                    cursor: "pointer", 
+                    borderRadius: "6px", 
+                    display: "flex", 
+                    gap: "6px", 
+                    alignItems: "center",
+                    background: "var(--wiz-surface)",
+                    border: "1px solid var(--wiz-border)",
+                    margin: 0
+                  }}
+                >
+                  <span style={{ fontSize: "14px" }}>📎</span> Anexar Imagem
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length > 0) {
+                        atualizarDados({ dotacaoImagens: files, dotacao: "Ver imagem em anexo" });
+                      }
+                    }}
+                  />
+                </label>
+              </div>
             </div>
           )}
         </div>
