@@ -65,6 +65,15 @@ def gerar_edital(tipo_edital: str, dados_preenchimento: dict):
     dados_minuta = dados_processados.copy()
     dados_minuta["{{N.MODALIDADE}}"] = "XX"
     dados_minuta["{{MINUTA DE}}"] = "MINUTA DE "
+    dados_minuta["{{DATA DA SESSAO}}"] = "XX/XX/XXXX"
+    dados_minuta["{{DATA REC PROP1}}"] = "XX/XX/XXXX"
+    dados_minuta["{{DATA DA SESSAO2}}"] = "XX/XX/XXXX"
+    dados_minuta["{{DATA DO EDITAL}}"] = "XX de XXXXXXXX de XXXX"
+    dados_minuta["{{HORA SESSAO}}"] = "XXhXXmin"
+    dados_minuta["{{HORA_SESSAO}}"] = "XXhXXmin"
+    dados_minuta["{{HORA INICIO DO REC}}"] = "XXhXXmin"
+    dados_minuta["{{HORA FIM DO REC}}"] = "XXhXXmin"
+    dados_minuta["{{HORA INICIO CRED}}"] = "XXhXXmin"
     nome_arq_minuta = f"{modalidade_nome} XX Proc {num_proc_arq} - MINUTA DE {mod_abr} 15.04.2026.docx"
     caminho_minuta = os.path.join(diretorio_saida, nome_arq_minuta)
     preencher_documento(caminho_modelo, caminho_minuta, dados_minuta)
