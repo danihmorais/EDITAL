@@ -35,7 +35,7 @@ export const mapearDadosWizard = async (dados: any) => {
       arquivoBase = "pregao_presencial";
       break;
     case "DISPENSA":
-      modalidadeFormatada = "Dispensa Eletrônica";
+      modalidadeFormatada = "Dispensa";
       arquivoBase = "dispensa";
       break;
     case "DISPENSA_BLL":

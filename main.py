@@ -14,8 +14,8 @@ if sys.platform == "win32":
         sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
 
 MODELOS_DISPONIVEIS = {
-    "dispensa": "modelos/Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx",
-    "dispensa_bll": "modelos/Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx",
+    "dispensa": "modelos/Dispensa xx Proc xx -  MINUTA DP 15.04.2026.docx",
+    "dispensa_bll": "modelos/Dispensa xx Proc xx -  MINUTA DE 15.04.2026.docx",
     "pregao_eletronico": "modelos/Pregão xx Proc xx -  MINUTA PE 15.04.2026.docx",
     "pregao_presencial": "modelos/Pregão xx Proc xx -  MINUTA PP 15.04.2026.docx"
 }
@@ -23,13 +23,13 @@ MODELOS_DISPONIVEIS = {
 MOD_ABR_MAP = {
     "PREGAO_PRESENCIAL": "PP",
     "PREGAO_ELETRONICO": "PE",
-    "DISPENSA_BLL": "DP",
-    "DISPENSA": "DE"
+    "DISPENSA_BLL": "DE",
+    "DISPENSA": "DP"
 }
 
 MODALIDADE_TEXTO = {
     "PREGAO_ELETRONICO": "Pregão Eletrônico",
-    "DISPENSA": "Dispensa Eletrônica",
+    "DISPENSA": "Dispensa",
     "DISPENSA_BLL": "Dispensa Eletrônica BLL",
     "PREGAO_PRESENCIAL": "Pregão Presencial"
 }
