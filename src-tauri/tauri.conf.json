@@ -1,6 +1,6 @@
 {
   "productName": "MontaEdital - Gerador de Editais",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "identifier": "com.danihmorais.montaedital",
   "build": {
     "beforeDevCommand": "npm run build-backend && npm run dev",
